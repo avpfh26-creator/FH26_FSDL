@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Processor</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-cogs"></i> AI Image Processor</h1>
+            <p>Upload an image or fetch from web, then apply AI processing techniques</p>
+        </div>
+
+        <div class="main">
+            <!-- Sidebar with techniques -->
+            <div class="sidebar">
+                <div class="api-section">
+                    <h3><i class="fas fa-key"></i> API Settings</h3>
+                    <input type="password" id="apiKey" placeholder="Enter DeepSeek API Key" class="api-input">
+                    <button onclick="toggleApiKey()" class="btn-small">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button onclick="saveApiKey()" class="btn-small">
+                        <i class="fas fa-save"></i>
+                    </button>
+                </div>
+
+                <div class="techniques">
+                    <h3><i class="fas fa-magic"></i> Processing Techniques</h3>
+                    
+                    <div class="category">
+                        <h4>1. Image Enhancement</h4>
+                        <button onclick="applyTechnique('contrast')" class="tech-btn">
+                            <i class="fas fa-adjust"></i> Contrast Adjustment
+                        </button>
+                        <button onclick="applyTechnique('histogram')" class="tech-btn">
+                            <i class="fas fa-chart-bar"></i> Histogram Equalization
+                        </button>
+                        <button onclick="applyTechnique('noise')" class="tech-btn">
+                            <i class="fas fa-volume-mute"></i> Noise Reduction
+                        </button>
+                    </div>
+
+                    <div class="category">
+                        <h4>2. Image Restoration</h4>
+                        <button onclick="applyTechnique('deblur')" class="tech-btn">
+                            <i class="fas fa-search"></i> Deblurring
+                        </button>
+                        <button onclick="applyTechnique('inpaint')" class="tech-btn">
+                            <i class="fas fa-paint-brush"></i> Inpainting
+                        </button>
+                        <button onclick="applyTechnique('denoise')" class="tech-btn">
+                            <i class="fas fa-filter"></i> Denoising
+                        </button>
+                    </div>
+
+                    <div class="category">
+                        <h4>3. Image Segmentation</h4>
+                        <button onclick="applyTechnique('threshold')" class="tech-btn">
+                            <i class="fas fa-th"></i> Thresholding
+                        </button>
+                        <button onclick="applyTechnique('edge')" class="tech-btn">
+                            <i class="fas fa-border-style"></i> Edge Detection
+                        </button>
+                        <button onclick="applyTechnique('region')" class="tech-btn">
+                            <i class="fas fa-object-group"></i> Region Segmentation
+                        </button>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button onclick="fetchSampleImage()" class="action-btn">
+                        <i class="fas fa-download"></i> Fetch Sample Image
+                    </button>
+                    <button onclick="resetImage()" class="action-btn">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                    <button onclick="downloadImage()" class="action-btn">
+                        <i class="fas fa-save"></i> Download
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main content area -->
+            <div class="content">
+                <div class="image-section">
+                    <div class="image-container">
+                        <h3>Original Image</h3>
+                        <div class="image-box" id="originalImage">
+                            <i class="fas fa-image fa-4x"></i>
+                            <p>No image loaded</p>
+                        </div>
+                    </div>
+
+                    <div class="image-container">
+                        <h3>Processed Image</h3>
+                        <div class="image-box" id="processedImage">
+                            <i class="fas fa-cog fa-spin fa-4x"></i>
+                            <p>Processing result will appear here</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="upload-section">
+                    <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+                        <i class="fas fa-cloud-upload-alt fa-3x"></i>
+                        <h3>Upload Your Image</h3>
+                        <p>Click to select image file</p>
+                        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    </div>
+
+                    <div class="url-input">
+                        <h3>Or fetch from URL:</h3>
+                        <div class="url-box">
+                            <input type="text" id="imageUrl" 
+                                   placeholder="https://example.com/image.jpg">
+                            <button onclick="fetchImageFromUrl()" class="fetch-btn">
+                                <i class="fas fa-external-link-alt"></i> Fetch
+                            </button>
+                        </div>
+                        <div class="sample-links">
+                            <p>Try these sample images:</p>
+                            <div class="sample-btns">
+                                <button onclick="useSample('nature')">Nature</button>
+                                <button onclick="useSample('city')">City</button>
+                                <button onclick="useSample('portrait')">Portrait</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3><i class="fas fa-info-circle"></i> Processing Info</h3>
+                    <div class="info-content">
+                        <div class="info-item">
+                            <strong>Selected Technique:</strong>
+                            <span id="currentTechnique">None</span>
+                        </div>
+                        <div class="info-item">
+                            <strong>Status:</strong>
+                            <span id="status">Ready</span>
+                        </div>
+                        <div class="info-item">
+                            <strong>Instructions sent to AI:</strong>
+                            <p id="aiInstructions">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Powered by DeepSeek AI Vision API</p>
+            <p class="small">Get API key from <a href="https://platform.deepseek.com" target="_blank">DeepSeek Platform</a></p>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading">
+        <div class="spinner"></div>
+        <p>AI is processing your image...</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

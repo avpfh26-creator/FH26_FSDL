@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ES6 Real-Life Use Cases Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .card h2 {
+            color: #4CAF50;
+            margin-top: 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .card h3 {
+            color: #666;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .output {
+            background-color: #f8f9fa;
+            border-left: 4px solid #4CAF50;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #777;
+            font-size: 14px;
+        }
+        .badge {
+            background-color: #4CAF50;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            display: inline-block;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 ES6 Features in Real Life</h1>
+    <p style="text-align: center; color: #666;">Click any button to see ES6 features in action!</p>
+    
+    <div class="container">
+        <!-- Card 1: Shopping Cart -->
+        <div class="card">
+            <h2>🛒 Shopping Cart <span class="badge">Arrow Functions + Template Literals</span></h2>
+            <h3>Calculate totals with modern ES6 syntax</h3>
+            <button onclick="runShoppingCart()">Calculate Total</button>
+            <div id="shoppingCartOutput" class="output">
+                Click button to see output...
+            </div>
+        </div>
+
+        <!-- Card 2: Contact Manager -->
+        <div class="card">
+            <h2>📞 Contact Manager <span class="badge">Destructuring + Map</span></h2>
+            <h3>Find contacts using object destructuring</h3>
+            <button onclick="runContactManager()">Search Contact</button>
+            <div id="contactOutput" class="output">
+                Click button to see output...
+            </div>
+        </div>
+
+        <!-- Card 3: Weather Processor -->
+        <div class="card">
+            <h2>🌤️ Weather App <span class="badge">Spread/Rest Operators</span></h2>
+            <h3>Combine and process weather data</h3>
+            <button onclick="runWeatherApp()">Show Weather</button>
+            <div id="weatherOutput" class="output">
+                Click button to see output...
+            </div>
+        </div>
+
+        <!-- Card 4: Task Manager -->
+        <div class="card">
+            <h2>✅ Task Manager <span class="badge">Classes + Default Parameters</span></h2>
+            <h3>Manage tasks with OOP approach</h3>
+            <button onclick="runTaskManager()">Show Tasks</button>
+            <div id="taskOutput" class="output">
+                Click button to see output...
+            </div>
+        </div>
+
+        <!-- Card 5: Restaurant Order -->
+        <div class="card">
+            <h2>🍕 Restaurant Order <span class="badge">Promises + Async/Await</span></h2>
+            <h3>Process orders asynchronously</h3>
+            <button onclick="runRestaurantOrder()">Place Order</button>
+            <div id="orderOutput" class="output">
+                Click button to see output...
+            </div>
+        </div>
+
+        <!-- Bonus: Array Methods -->
+        <div class="card">
+            <h2>🔧 Array Methods <span class="badge">Modern Array Operations</span></h2>
+            <h3>Filter and transform products</h3>
+            <button onclick="runArrayMethods()">Filter Products</button>
+            <div id="arrayOutput" class="output">
+                Click button to see output...
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        ⚡ Click any button to see ES6 features in action! Each demo shows real-world usage of modern JavaScript.
+    </div>
+
+    <script>
+        // Helper function to clear and set output
+        function setOutput(elementId, content) {
+            document.getElementById(elementId).innerHTML = content;
+        }
+
+        // 1. Shopping Cart with Arrow Functions and Template Literals
+        function runShoppingCart() {
+            const cart = [
+                { item: '💻 Laptop', price: 999.99, quantity: 1 },
+                { item: '🖱️ Mouse', price: 29.99, quantity: 2 },
+                { item: '⌨️ Keyboard', price: 79.99, quantity: 1 },
+                { item: '🎧 Headphones', price: 199.99, quantity: 1 }
+            ];
+
+            // Arrow function
+            const calculateTotal = (items) => {
+                return items.reduce((total, product) => total + (product.price * product.quantity), 0);
+            };
+
+            // Template literals for formatted output
+            const total = calculateTotal(cart);
+            const output = `
+🛍️ <strong>SHOPPING CART SUMMARY</strong>
+${'='.repeat(30)}
+${cart.map(item => `${item.item} x${item.quantity}: $${(item.price * item.quantity).toFixed(2)}`).join('<br>')}
+${'='.repeat(30)}
+<strong>Total: $${total.toFixed(2)}</strong>
+📦 Items: ${cart.length} different products
+            `;
+            
+            setOutput('shoppingCartOutput', output);
+        }
+
+        // 2. Contact Manager with Destructuring
+        function runContactManager() {
+            const contacts = new Map();
+            
+            // Using const and object literals
+            const addContact = (name, phone, email) => {
+                contacts.set(name, { phone, email });
+            };
+
+            // Add some contacts
+            addContact('John Doe', '555-0123', 'john@email.com');
+            addContact('Jane Smith', '555-0456', 'jane@email.com');
+            addContact('Bob Wilson', '555-0789', 'bob@email.com');
+
+            // Find contact with destructuring
+            const findContact = (name) => {
+                const contact = contacts.get(name);
+                if (contact) {
+                    // Object destructuring
+                    const { phone, email } = contact;
+                    return `
+📞 <strong>CONTACT FOUND</strong>
+${'─'.repeat(20)}
+👤 Name: ${name}
+📱 Phone: ${phone}
+📧 Email: ${email}
+                    `;
+                } else {
+                    return `❌ Contact "${name}" not found`;
+                }
+            };
+
+            setOutput('contactOutput', findContact('Jane Smith'));
+        }
+
+        // 3. Weather App with Spread/Rest Operators
+        function runWeatherApp() {
+            const todaysWeather = {
+                city: 'New York',
+                temperature: 72,
+                condition: '☀️ Sunny',
+                humidity: '65%'
+            };
+
+            const hourlyForecast = {
+                morning: 68,
+                afternoon: 75,
+                evening: 70,
+                night: 65
+            };
+
+            // Spread operator to combine data
+            const completeWeather = {
+                ...todaysWeather,
+                forecast: { ...hourlyForecast },
+                lastUpdated: new Date().toLocaleTimeString()
+            };
+
+            // Rest operator to collect temperatures
+            const displayForecast = (city, ...temps) => {
+                const avgTemp = (temps.reduce((sum, t) => sum + t, 0) / temps.length).toFixed(1);
+                return `
+🌍 <strong>WEATHER FORECAST - ${city}</strong>
+${'─'.repeat(30)}
+Current: ${todaysWeather.condition} ${todaysWeather.temperature}°F
+Humidity: ${todaysWeather.humidity}
+<br>
+Hourly Forecast:
+🌅 Morning: ${temps[0]}°F
+☀️ Afternoon: ${temps[1]}°F
+🌆 Evening: ${temps[2]}°F
+🌃 Night: ${temps[3]}°F
+${'─'.repeat(30)}
+📊 Average Temperature: ${avgTemp}°F
+🕐 Updated: ${completeWeather.lastUpdated}
+                `;
+            };
+
+            const output = displayForecast('New York', 68, 75, 70, 65);
+            setOutput('weatherOutput', output);
+        }
+
+        // 4. Task Manager with Classes
+        function runTaskManager() {
+            class Task {
+                constructor(title, priority = 'medium', completed = false) {
+                    this.title = title;
+                    this.priority = priority;
+                    this.completed = completed;
+                    this.createdAt = new Date().toLocaleString();
+                }
+                
+                getInfo() {
+                    const status = this.completed ? '✅ Completed' : '⭕ Pending';
+                    const priorityEmoji = {
+                        high: '🔴',
+                        medium: '🟡',
+                        low: '🟢'
+                    };
+                    return `${priorityEmoji[this.priority]} [${this.priority.toUpperCase()}] ${this.title} - ${status}`;
+                }
+            }
+
+            class TaskManager {
+                constructor() {
+                    this.tasks = [];
+                }
+                
+                addTask(task) {
+                    this.tasks.push(task);
+                }
+                
+                getTasks() {
+                    let output = `
+📋 <strong>TASK MANAGER</strong>
+${'═'.repeat(40)}<br>`;
+                    
+                    this.tasks.forEach((task, index) => {
+                        output += `${index + 1}. ${task.getInfo()}<br>`;
+                    });
+                    
+                    output += `${'═'.repeat(40)}<br>
+📊 Total Tasks: ${this.tasks.length}
+✅ Completed: ${this.tasks.filter(t => t.completed).length}
+⭕ Pending: ${this.tasks.filter(t => !t.completed).length}`;
+                    
+                    return output;
+                }
+            }
+
+            // Usage
+            const myTasks = new TaskManager();
+            myTasks.addTask(new Task('Buy groceries', 'high'));
+            myTasks.addTask(new Task('Read JavaScript book', 'medium'));
+            myTasks.addTask(new Task('Pay bills', 'high'));
+            myTasks.addTask(new Task('Morning exercise', 'low', true));
+            myTasks.addTask(new Task('Call mom', 'high', true));
+
+            setOutput('taskOutput', myTasks.getTasks());
+        }
+
+        // 5. Restaurant Order with Promises and Async/Await
+        function runRestaurantOrder() {
+            const output = document.getElementById('orderOutput');
+            output.innerHTML = '⏳ Processing order...';
+            
+            const prepareFood = (order) => {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve(`👨‍🍳 ${order} is ready!`);
+                    }, 1000);
+                });
+            };
+
+            const deliverFood = (preparedOrder) => {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve(`🛵 ${preparedOrder} delivered to table`);
+                    }, 1000);
+                });
+            };
+
+            const processOrder = async (customerName, orderItems) => {
+                let result = `🍽️ <strong>RESTAURANT ORDER #${Math.floor(Math.random() * 1000)}</strong><br>`;
+                result += `👤 Customer: ${customerName}<br>`;
+                result += `📝 Items: ${orderItems.join(', ')}<br>`;
+                result += `${'─'.repeat(30)}<br>`;
+                
+                for (const item of orderItems) {
+                    const prepared = await prepareFood(item);
+                    result += `✓ ${prepared}<br>`;
+                    const delivered = await deliverFood(prepared);
+                    result += `✓ ${delivered}<br>`;
+                }
+                
+                result += `${'─'.repeat(30)}<br>`;
+                result += `🎉 <strong>Order complete! Bon appétit!</strong>`;
+                
+                return result;
+            };
+
+            // Start the async process
+            processOrder('Alice', ['🍕 Margherita Pizza', '🥗 Caesar Salad', '🥤 Lemonade'])
+                .then(result => {
+                    setOutput('orderOutput', result);
+                });
+        }
+
+        // Bonus: Modern Array Methods
+        function runArrayMethods() {
+            const products = [
+                { name: '📱 iPhone 13', price: 999, category: 'electronics', inStock: true },
+                { name: '👖 Designer Jeans', price: 79, category: 'clothing', inStock: false },
+                { name: '👟 Running Shoes', price: 129, category: 'clothing', inStock: true },
+                { name: '🎧 AirPods', price: 199, category: 'electronics', inStock: true },
+                { name: '⌚ Smart Watch', price: 299, category: 'electronics', inStock: true }
+            ];
+
+            // Using modern array methods
+            const affordableElectronics = products
+                .filter(p => p.category === 'electronics' && p.inStock && p.price < 500)
+                .map(p => ({
+                    ...p,
+                    priceWithTax: (p.price * 1.1).toFixed(2),
+                    savings: p.price < 300 ? '🔥 Hot Deal!' : 'Good Value'
+                }));
+
+            let output = `
+🛍️ <strong>PRODUCT CATALOG - ELECTRONICS</strong>
+${'═'.repeat(45)}<br>`;
+
+            affordableElectronics.forEach(p => {
+                output += `${p.name}<br>
+   💰 Price: $${p.price} | 💳 With Tax: $${p.priceWithTax}<br>
+   🏷️ ${p.savings} | 📦 In Stock: ✅<br>
+   ${'─'.repeat(35)}<br>`;
+            });
+
+            output += `📊 Found ${affordableElectronics.length} affordable electronics items`;
+
+            setOutput('arrayOutput', output);
+        }
+    </script>
+</body>
+</html>

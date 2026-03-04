@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Weather</title>
+    <style>
+        body { font-family: Arial; max-width: 400px; margin: 50px auto; padding: 20px; }
+        .weather-box { background: linear-gradient(135deg, #00b4db, #0083b0); color: white; 
+                      padding: 20px; border-radius: 10px; text-align: center; }
+        input, button { padding: 10px; margin: 5px; width: 100%; box-sizing: border-box; }
+        .temp { font-size: 48px; font-weight: bold; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h2>Simple Weather App</h2>
+    <input type="text" id="city" placeholder="Enter city (e.g., Tokyo)" value="Tokyo">
+    <button onclick="getWeather()">Check Weather</button>
+    <div id="weather" class="weather-box">Enter a city to see weather</div>
+
+    <script>
+        const API_KEY = '61f47d51e3e7302f2ad425851c0dedc3'; // Public test key
+        
+        function getWeather() {
+            const city = document.getElementById('city').value;
+            const weatherDiv = document.getElementById('weather');
+            
+            weatherDiv.innerHTML = 'Loading...';
+            
+            fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`)
+                .then(res => {
+                    if (!res.ok) throw new Error('City not found');
+                    return res.json();
+                })
+                .then(data => {
+                    weatherDiv.innerHTML = `
+                        <div style="font-size:24px">${data.name}, ${data.sys.country}</div>
+                        <div class="temp">${Math.round(data.main.temp)}°C</div>
+                        <div>${data.weather[0].main} - ${data.weather[0].description}</div>
+                        <div style="margin-top:10px">Humidity: ${data.main.humidity}% | Wind: ${data.wind.speed}m/s</div>
+                    `;
+                })
+                .catch(err => {
+                    weatherDiv.innerHTML = `❌ ${err.message}`;
+                });
+        }
+        
+        // Auto-load on page start
+        getWeather();
+    </script>
+</body>
+</html>

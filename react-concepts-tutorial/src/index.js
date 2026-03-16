@@ -16,6 +16,7 @@ import ClickEvents from './components/events/ClickEvents';
 import MouseEvents from './components/events/MouseEvents';
 import KeyboardEvents from './components/events/KeyboardEvents';
 import FormEvents from './components/events/FormEvents';
+import ClipboardEvents from './components/events/ClipboardEvents';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -33,7 +34,8 @@ root.render(
     {/* <ClickEvents /> */}
     {/* <MouseEvents /> */}
     {/* <KeyboardEvents /> */}
-    <FormEvents />
+    {/* <FormEvents /> */}
+    <ClipboardEvents />
   </React.StrictMode>
 );
 

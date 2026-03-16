@@ -8,6 +8,14 @@ import ClassComponent from './components/01-basic-components/ClassComponent';
 import ComponentDemo from './components/01-basic-components/ComponentDemo';
 import PropsBasics from './components/02-props/PropsBasics';
 import PropsDestructuring from './components/02-props/PropsDestructuring';
+import SimpleContactForm from './components/forms/SimpleContactForm';
+import LoginForm from './components/forms/LoginForm';
+import RegistrationForm from './components/forms/RegistrationForm';
+import SurveyForm from './components/forms/SurveyForm';
+import ClickEvents from './components/events/ClickEvents';
+import MouseEvents from './components/events/MouseEvents';
+import KeyboardEvents from './components/events/KeyboardEvents';
+import FormEvents from './components/events/FormEvents';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -17,7 +25,15 @@ root.render(
     {/* <ClassComponent /> */}
     {/* <ComponentDemo /> */}
     {/* <PropsBasics /> */}
-    <PropsDestructuring />
+    {/* <PropsDestructuring /> */}
+    {/* <SimpleContactForm /> */}
+    {/* <LoginForm /> */}
+    {/* <RegistrationForm /> */}
+    {/* <SurveyForm /> */}
+    {/* <ClickEvents /> */}
+    {/* <MouseEvents /> */}
+    {/* <KeyboardEvents /> */}
+    <FormEvents />
   </React.StrictMode>
 );
 

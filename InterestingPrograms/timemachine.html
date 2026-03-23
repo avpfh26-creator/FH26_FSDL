@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Time Machine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .time-machine {
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: 20px;
+            padding: 2rem;
+            width: 500px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            border: 2px solid #00ff00;
+        }
+        
+        h1 {
+            color: #00ff00;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .display {
+            background: #000;
+            color: #0f0;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            margin: 1rem 0;
+            font-family: monospace;
+        }
+        
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+        }
+        
+        .activity {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #111;
+            border-radius: 10px;
+        }
+        
+        .task {
+            color: #ff0;
+            font-size: 0.9rem;
+        }
+        
+        input {
+            background: #000;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 8px;
+            margin: 5px 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="time-machine">
+        <h1>⏰ TIME MACHINE ⏰</h1>
+        <div class="display" id="output">Ready for time travel...</div>
+        
+        <div class="activity">
+            <h3 style="color:#0f0;">🎯 MISSION: Fix the Time Machine!</h3>
+            <div class="task">
+                <p><strong>Task 1:</strong> Convert ES5 functions to arrow functions</p>
+                <p><strong>Task 2:</strong> Use template literals for time messages</p>
+                <p><strong>Task 3:</strong> Understand lexical 'this' binding</p>
+            </div>
+            
+            <div id="controls">
+                <button onclick="travelToPast()">🚀 Travel to PAST</button>
+                <button onclick="travelToFuture()">🌀 Travel to FUTURE</button>
+                <button onclick="showCurrentTime()">⏱️ Current Time</button>
+            </div>
+            
+            <div style="margin-top: 1rem;">
+                <input type="text" id="yearInput" placeholder="Enter year (e.g., 1985)" />
+                <button onclick="travelToYear()">Time Travel!</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ BROKEN CODE (ES5 style) - STUDENTS WILL FIX ============
+        
+        // PROBLEM 1: Fix this using arrow functions
+        const timeMachine = {
+            currentYear: 2024,
+            travels: [],
+            
+            // ES5 function - has its own 'this' context
+            addTravel: function(destination) {
+                // BUG: 'this' doesn't refer to timeMachine here!
+                setTimeout(function() {
+                    this.travels.push(destination);
+                    console.log("Added travel to: " + destination);
+                }, 1000);
+            },
+            
+            // STUDENT TASK 1: Convert this to arrow function
+            displayTravels: function() {
+                // FIX THIS: Use arrow function to access 'this' correctly
+                return this.travels.map(function(travel) {
+                    return "Traveled to: " + travel;
+                }).join("\n");
+            }
+        };
+        
+        // ============ WORKING FUNCTIONS (Will be fixed by students) ============
+        
+        // STUDENT TASK 2: Convert these to arrow functions
+        function travelToPast() {
+            const yearsBack = 100;
+            const destination = 2024 - yearsBack;
+            // FIX: Use template literal
+            document.getElementById('output').innerHTML = "Traveling back " + yearsBack + " years to " + destination + "! 🕰️";
+            timeMachine.addTravel(destination);
+        }
+        
+        function travelToFuture() {
+            const yearsForward = 50;
+            const destination = 2024 + yearsForward;
+            // FIX: Use template literal
+            document.getElementById('output').innerHTML = "Zooming forward " + yearsForward + " years to " + destination + "! 🚀";
+            timeMachine.addTravel(destination);
+        }
+        
+        function showCurrentTime() {
+            const now = new Date();
+            // FIX: Use template literal with multiple lines
+            document.getElementById('output').innerHTML = "Current time: " + now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds() + "\nDate: " + now.toDateString();
+        }
+        
+        // STUDENT TASK 3: Implement travelToYear using arrow functions and template literals
+        function travelToYear() {
+            const yearInput = document.getElementById('yearInput');
+            const year = parseInt(yearInput.value);
+            
+            if (isNaN(year)) {
+                // FIX: Use template literal
+                document.getElementById('output').innerHTML = "ERROR: Please enter a valid year!";
+                return;
+            }
+            
+            // TODO: Calculate time difference and create message using template literal
+            // TODO: Add travel to history using timeMachine.addTravel
+            // TODO: Update display with emojis and formatting
+        }
+        
+        // BONUS: Create an arrow function that formats time travel logs
+        const formatTravelLog = (travels) => {
+            // TODO: Use template literals to create a formatted log
+            // Return a string with all travels in a nice format
+        };
+        
+        // ============ HINTS FOR STUDENTS ============
+        console.log(`
+        💡 HINTS:
+        1. Arrow functions: () => {}
+        2. Template literals: ` + "`Hello ${variable}`" + `
+        3. Arrow functions inherit 'this' from parent scope
+        4. Use .bind() or convert to arrow function to fix 'this' issues
+        `);
+    </script>
+</body>
+</html>

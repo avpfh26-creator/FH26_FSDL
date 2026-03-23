@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Constructor Quest</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #1e3c72;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .game-world {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .character-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 10px;
+            display: inline-block;
+            width: 250px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .character-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .battle-log {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            margin: 20px 0;
+        }
+        
+        button {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+            background: #c0392b;
+        }
+        
+        .stats {
+            background: #ecf0f1;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .skill-tree {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        
+        .skill {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 5px 10px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .skill:hover {
+            background: #2980b9;
+        }
+        
+        .inventory {
+            background: #f39c12;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        input {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        @keyframes attack {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+            100% { transform: translateX(0); }
+        }
+        
+        .attacking {
+            animation: attack 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-world">
+        <h1>⚔️ CLASS CONSTRUCTOR QUEST ⚔️</h1>
+        <p><em>"Build your hero, master classes, and defeat enemies!"</em></p>
+        
+        <div id="characterCreation">
+            <h3>🎭 CREATE YOUR HERO</h3>
+            <input type="text" id="heroName" placeholder="Hero Name" />
+            <select id="heroClass">
+                <option value="warrior">⚔️ Warrior (High HP, Strong Attack)</option>
+                <option value="mage">🔮 Mage (High Magic, Special Abilities)</option>
+                <option value="rogue">🗡️ Rogue (High Speed, Critical Hits)</option>
+                <option value="paladin">🛡️ Paladin (Balanced, Healing)</option>
+            </select>
+            <button onclick="createHero()">Create Hero!</button>
+        </div>
+        
+        <div id="gameArea" style="display: none;">
+            <div id="heroDisplay"></div>
+            
+            <div class="battle-log" id="battleLog">
+                <strong>📜 QUEST LOG:</strong><br>
+                Create your hero to begin the adventure!
+            </div>
+            
+            <div id="enemyArea">
+                <h3>👾 ENEMIES</h3>
+                <div id="enemies"></div>
+            </div>
+            
+            <div class="skill-tree" id="skillTree">
+                <h3>🌟 SKILL TREE</h3>
+                <div id="skills"></div>
+            </div>
+            
+            <button onclick="nextLevel()">➡️ Next Level</button>
+            <button onclick="resetGame()">🔄 Reset Game</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // We'll use modules - but for simplicity in one file, we'll simulate module behavior
+        // In a real scenario, these would be in separate files
+        
+        // ============ BASE CLASS ============
+        class Character {
+            constructor(name, hp, attack, defense) {
+                this.name = name;
+                this.hp = hp;
+                this.maxHp = hp;
+                this.attack = attack;
+                this.defense = defense;
+                this.level = 1;
+                this.exp = 0;
+                this.inventory = [];
+                this.skills = [];
+            }
+            
+            takeDamage(damage) {
+                const actualDamage = Math.max(1, damage - this.defense);
+                this.hp = Math.max(0, this.hp - actualDamage);
+                return actualDamage;
+            }
+            
+            heal(amount) {
+                this.hp = Math.min(this.maxHp, this.hp + amount);
+                return amount;
+            }
+            
+            attackEnemy(enemy) {
+                const damage = Math.floor(Math.random() * this.attack) + 5;
+                const actualDamage = enemy.takeDamage(damage);
+                return actualDamage;
+            }
+            
+            gainExp(amount) {
+                this.exp += amount;
+                if (this.exp >= this.level * 100) {
+                    this.levelUp();
+                }
+            }
+            
+            levelUp() {
+                this.level++;
+                this.exp = 0;
+                this.maxHp += 20;
+                this.hp = this.maxHp;
+                this.attack += 5;
+                this.defense += 3;
+                return true;
+            }
+            
+            addItem(item) {
+                this.inventory.push(item);
+            }
+            
+            useItem(itemIndex) {
+                if (this.inventory[itemIndex]) {
+                    const item = this.inventory[itemIndex];
+                    // Item usage logic
+                    this.inventory.splice(itemIndex, 1);
+                    return item;
+                }
+                return null;
+            }
+        }
+        
+        // ============ STUDENT TASKS: EXTEND THE CLASSES ============
+        
+        // TASK 1: Create Warrior class that extends Character
+        class Warrior extends Character {
+            constructor(name) {
+                // TODO: Call super with warrior stats (HP: 120, Attack: 25, Defense: 15)
+                // TODO: Add warrior-specific property: rage
+                super(name, 0, 0, 0); // Fix this!
+                this.className = "Warrior";
+                // Add rage meter
+            }
+            
+            // TODO: Override attackEnemy with rage mechanic
+            attackEnemy(enemy) {
+                // Should do bonus damage based on rage
+                return super.attackEnemy(enemy);
+            }
+            
+            // TODO: Add special ability: Berserk Mode
+            berserk() {
+                // Temporarily doubles attack but reduces defense
+            }
+        }
+        
+        // TASK 2: Create Mage class that extends Character
+        class Mage extends Character {
+            constructor(name) {
+                // TODO: Call super with mage stats (HP: 80, Attack: 35, Defense: 8)
+                // TODO: Add mana system
+                super(name, 0, 0, 0);
+                this.className = "Mage";
+                this.mana = 100;
+            }
+            
+            // TODO: Add spell casting
+            castSpell(spellName, enemy) {
+                // Different spells with different mana costs
+            }
+        }
+        
+        // TASK 3: Create Rogue class that extends Character
+        class Rogue extends Character {
+            constructor(name) {
+                // TODO: Call super with rogue stats (HP: 90, Attack: 28, Defense: 10)
+                // TODO: Add stealth and crit chance
+                super(name, 0, 0, 0);
+                this.className = "Rogue";
+                this.critChance = 0.3;
+            }
+            
+            // TODO: Override attackEnemy with crit chance
+            attackEnemy(enemy) {
+                // Should have chance to deal double damage
+                return super.attackEnemy(enemy);
+            }
+            
+            // TODO: Add stealth ability
+            stealth() {
+                // Temporarily increases crit chance
+            }
+        }
+        
+        // TASK 4: Create Paladin class that extends Character
+        class Paladin extends Character {
+            constructor(name) {
+                // TODO: Call super with paladin stats (HP: 110, Attack: 22, Defense: 12)
+                // TODO: Add holy power
+                super(name, 0, 0, 0);
+                this.className = "Paladin";
+                this.holyPower = 0;
+            }
+            
+            // TODO: Add healing ability
+            holyLight() {
+                // Heals based on holy power
+            }
+            
+            // TODO: Add defensive aura
+            aura() {
+                // Boosts party defense
+            }
+        }
+        
+        // Enemy class
+        class Enemy extends Character {
+            constructor(name, hp, attack, defense, expReward) {
+                super(name, hp, attack, defense);
+                this.expReward = expReward;
+            }
+        }
+        
+        // Game state
+        let currentHero = null;
+        let currentEnemies = [];
+        let gameLog = [];
+        
+        function log(message, isError = false) {
+            gameLog.unshift(`[${new Date().toLocaleTimeString()}] ${message}`);
+            const logDiv = document.getElementById('battleLog');
+            logDiv.innerHTML = '<strong>📜 QUEST LOG:</strong><br>' + 
+                gameLog.map(msg => `<div style="color: ${isError ? '#e74c3c' : '#ecf0f1'}">${msg}</div>`).join('');
+        }
+        
+        function createHero() {
+            const name = document.getElementById('heroName').value;
+            const heroClass = document.getElementById('heroClass').value;
+            
+            if (!name) {
+                alert('Please enter a hero name!');
+                return;
+            }
+            
+            // TODO: Create hero based on selected class
+            switch(heroClass) {
+                case 'warrior':
+                    currentHero = new Warrior(name);
+                    break;
+                case 'mage':
+                    currentHero = new Mage(name);
+                    break;
+                case 'rogue':
+                    currentHero = new Rogue(name);
+                    break;
+                case 'paladin':
+                    currentHero = new Paladin(name);
+                    break;
+            }
+            
+            log(`✨ Hero created: ${currentHero.className} ${currentHero.name}!`);
+            log(`📊 Stats: HP ${currentHero.hp}/${currentHero.maxHp}, ATK ${currentHero.attack}, DEF ${currentHero.defense}`);
+            
+            document.getElementById('characterCreation').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'block';
+            
+            updateDisplay();
+            spawnEnemies();
+        }
+        
+        function spawnEnemies() {
+            // Create enemies based on hero level
+            const enemyCount = Math.min(3, currentHero.level);
+            currentEnemies = [];
+            
+            for (let i = 0; i < enemyCount; i++) {
+                const enemy = new Enemy(
+                    `Goblin ${i+1}`,
+                    40 + currentHero.level * 10,
+                    15 + currentHero.level * 3,
+                    5 + currentHero.level,
+                    50 + currentHero.level * 20
+                );
+                currentEnemies.push(enemy);
+            }
+            
+            log(`👾 ${enemyCount} enemies appear!`);
+            updateDisplay();
+        }
+        
+        function attackEnemy(enemyIndex) {
+            const enemy = currentEnemies[enemyIndex];
+            if (!enemy || enemy.hp <= 0) return;
+            
+            const damage = currentHero.attackEnemy(enemy);
+            log(`⚔️ ${currentHero.name} attacks ${enemy.name} for ${damage} damage!`);
+            
+            if (enemy.hp <= 0) {
+                log(`✅ ${enemy.name} defeated! +${enemy.expReward} XP`);
+                currentHero.gainExp(enemy.expReward);
+                currentEnemies.splice(enemyIndex, 1);
+                
+                if (currentEnemies.length === 0) {
+                    log(`🎉 All enemies defeated! Level up!`);
+                    nextLevel();
+                }
+            } else {
+                // Enemy counterattack
+                const enemyDamage = enemy.attackEnemy(currentHero);
+                log(`💥 ${enemy.name} counterattacks for ${enemyDamage} damage!`);
+                
+                if (currentHero.hp <= 0) {
+                    log(`💀 ${currentHero.name} has been defeated! Game Over!`, true);
+                    resetGame();
+                }
+            }
+            
+            updateDisplay();
+        }
+        
+        function nextLevel() {
+            if (currentEnemies.length === 0) {
+                currentHero.levelUp();
+                log(`🌟 ${currentHero.name} reached level ${currentHero.level}!`);
+                currentHero.heal(currentHero.maxHp);
+                spawnEnemies();
+            } else {
+                log(`⚠️ Defeat all enemies first!`, true);
+            }
+            updateDisplay();
+        }
+        
+        function updateDisplay() {
+            if (!currentHero) return;
+            
+            // Update hero display
+            const heroHtml = `
+                <div class="character-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <h3>${currentHero.className} ${currentHero.name}</h3>
+                    <div class="stats">
+                        <div>❤️ HP: ${currentHero.hp}/${currentHero.maxHp}</div>
+                        <div>⚔️ ATK: ${currentHero.attack}</div>
+                        <div>🛡️ DEF: ${currentHero.defense}</div>
+                        <div>⭐ Level: ${currentHero.level}</div>
+                        <div>📊 XP: ${currentHero.exp}/${currentHero.level * 100}</div>
+                    </div>
+                    <div class="inventory">
+                        <strong>🎒 Inventory:</strong> ${currentHero.inventory.length} items
+                    </div>
+                </div>
+            `;
+            document.getElementById('heroDisplay').innerHTML = heroHtml;
+            
+            // Update enemies display
+            const enemiesHtml = currentEnemies.map((enemy, index) => `
+                <div class="character-card" style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
+                    <h3>👾 ${enemy.name}</h3>
+                    <div class="stats">
+                        <div>❤️ HP: ${enemy.hp}/${enemy.maxHp}</div>
+                        <div>⚔️ ATK: ${enemy.attack}</div>
+                        <div>🛡️ DEF: ${enemy.defense}</div>
+                    </div>
+                    <button onclick="attackEnemy(${index})">⚔️ Attack!</button>
+                </div>
+            `).join('');
+            document.getElementById('enemies').innerHTML = enemiesHtml || "<p>No enemies! Click Next Level to continue.</p>";
+            
+            // Update skill tree
+            const skillsHtml = `
+                <div class="skill" onclick="useSkill('special')">✨ Special Ability</div>
+                <div class="skill" onclick="useSkill('heal')">💚 Heal</div>
+                <div class="skill" onclick="useSkill('power')">💪 Power Up</div>
+            `;
+            document.getElementById('skills').innerHTML = skillsHtml;
+        }
+        
+        function useSkill(skill) {
+            switch(skill) {
+                case 'heal':
+                    const healAmount = currentHero.heal(20);
+                    log(`💚 ${currentHero.name} heals for ${healAmount} HP!`);
+                    break;
+                case 'special':
+                    log(`✨ Special ability used! (Implement your class abilities!)`);
+                    break;
+                case 'power':
+                    log(`💪 Power up! (Implement temporary buffs!)`);
+                    break;
+            }
+            updateDisplay();
+            
+            // Enemy counterattack after skill use
+            if (currentEnemies.length > 0) {
+                const enemy = currentEnemies[0];
+                const damage = enemy.attackEnemy(currentHero);
+                log(`💥 ${enemy.name} attacks for ${damage} damage!`);
+                if (currentHero.hp <= 0) {
+                    log(`💀 ${currentHero.name} has been defeated!`, true);
+                    resetGame();
+                }
+            }
+            updateDisplay();
+        }
+        
+        function resetGame() {
+            currentHero = null;
+            currentEnemies = [];
+            gameLog = [];
+            document.getElementById('characterCreation').style.display = 'block';
+            document.getElementById('gameArea').style.display = 'none';
+            document.getElementById('heroName').value = '';
+            log("🔄 Game reset! Create a new hero to continue.");
+        }
+        
+        // Make functions globally available
+        window.createHero = createHero;
+        window.attackEnemy = attackEnemy;
+        window.nextLevel = nextLevel;
+        window.resetGame = resetGame;
+        window.useSkill = useSkill;
+        
+        // Initial log
+        log("🎮 Welcome to Class Constructor Quest!");
+        log("📚 Create a hero to begin your adventure!");
+        
+        console.log(`
+        💡 CLASS & MODULE HINTS:
+        1. Use 'extends' to create subclasses
+        2. Call 'super()' in constructor
+        3. Override methods for specialized behavior
+        4. Use 'export/import' for modules
+        5. Private fields with # for encapsulation
+        `);
+    </script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promise Parkour</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+            padding: 20px;
+        }
+        
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #0a0a0a;
+            border: 2px solid #0f0;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .obstacle {
+            background: #1a1a1a;
+            border-left: 4px solid #ff0;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        
+        .player {
+            background: #0f0;
+            color: #000;
+            padding: 5px;
+            display: inline-block;
+            animation: jump 0.5s;
+        }
+        
+        @keyframes jump {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0); }
+        }
+        
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: monospace;
+        }
+        
+        button:hover {
+            background: #0a0;
+            transform: scale(1.05);
+        }
+        
+        .log {
+            background: #000;
+            border: 1px solid #0f0;
+            padding: 10px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        
+        .success {
+            color: #0f0;
+        }
+        
+        .fail {
+            color: #f00;
+        }
+        
+        .loading {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .power-up {
+            background: #ff0;
+            color: #000;
+            padding: 5px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🏃 PROMISE PARKOUR 🏃‍♂️</h1>
+        <p><em>"Master async operations to complete the course!"</em></p>
+        
+        <div id="playerStatus" class="player">🏃‍♂️ PLAYER READY</div>
+        
+        <div id="obstacles">
+            <h3>🚧 OBSTACLE COURSE 🚧</h3>
+            <div class="obstacle" id="obstacle1">
+                <strong>Obstacle 1: API Call</strong><br>
+                Fetch user data from server (simulated)
+                <button onclick="attemptObstacle1()">Attempt with Promise</button>
+            </div>
+            
+            <div class="obstacle" id="obstacle2">
+                <strong>Obstacle 2: Multiple Requests</strong><br>
+                Get user posts and comments (Promise.all)
+                <button onclick="attemptObstacle2()">Attempt with Promise.all</button>
+            </div>
+            
+            <div class="obstacle" id="obstacle3">
+                <strong>Obstacle 3: Race Condition</strong><br>
+                First successful API wins (Promise.race)
+                <button onclick="attemptObstacle3()">Attempt with Promise.race</button>
+            </div>
+            
+            <div class="obstacle" id="obstacle4">
+                <strong>Obstacle 4: Async/Await Course</strong><br>
+                Complete sequential tasks
+                <button onclick="attemptObstacle4()">Attempt with Async/Await</button>
+            </div>
+            
+            <div class="obstacle" id="obstacle5">
+                <strong>Boss Battle: Error Handling</strong><br>
+                Handle failures gracefully
+                <button onclick="attemptBossBattle()">Fight with try/catch</button>
+            </div>
+        </div>
+        
+        <div class="log" id="gameLog">
+            <strong>🎮 GAME LOG:</strong><br>
+            Game started! Complete obstacles to win.<br>
+        </div>
+        
+        <button onclick="resetGame()">🔄 Reset Game</button>
+        <button onclick="autoCompleteDemo()">🤖 Auto-complete Demo</button>
+    </div>
+
+    <script>
+        // Simulated API Functions
+        function simulateAPI(endpoint, data, shouldFail = false, delay = 1000) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    if (shouldFail) {
+                        reject(new Error(`API Error: ${endpoint} failed!`));
+                    } else {
+                        resolve({
+                            endpoint,
+                            data,
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+                }, delay);
+            });
+        }
+        
+        function log(message, isError = false) {
+            const logDiv = document.getElementById('gameLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = isError ? 'fail' : 'success';
+            logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function updatePlayerStatus(status, isJumping = false) {
+            const player = document.getElementById('playerStatus');
+            player.innerHTML = status;
+            if (isJumping) {
+                player.style.animation = 'none';
+                setTimeout(() => {
+                    player.style.animation = 'jump 0.5s';
+                }, 10);
+            }
+        }
+        
+        // STUDENT TASKS
+        
+        function attemptObstacle1() {
+            log("🎯 Attempting Obstacle 1: Basic Promise");
+            updatePlayerStatus("🏃‍♂️ FETCHING USER DATA...", true);
+            
+            // TASK 1: Create a promise that fetches user data
+            // TODO: Create a promise that resolves with user data after 1.5 seconds
+            // Use simulateAPI('user', { name: 'Parkour Master', level: 5 }, false, 1500)
+            
+            // Your promise code here
+            // .then(result => {
+            //     log(`✅ User data received: ${JSON.stringify(result.data)}`);
+            //     updatePlayerStatus(`🏃‍♂️ LEVEL ${result.data.level} PARKOUR MASTER!`);
+            // })
+            // .catch(error => {
+            //     log(`❌ Failed: ${error.message}`, true);
+            //     updatePlayerStatus("💀 OBSTACLE FAILED!");
+            // });
+        }
+        
+        function attemptObstacle2() {
+            log("🎯 Attempting Obstacle 2: Promise.all");
+            updatePlayerStatus("🏃‍♂️ LOADING MULTIPLE RESOURCES...", true);
+            
+            // TASK 2: Use Promise.all to fetch multiple resources simultaneously
+            const userPromise = simulateAPI('user', { name: 'Runner', posts: 10 }, false, 1000);
+            const postsPromise = simulateAPI('posts', [{ id: 1, title: 'Parkour Tips' }], false, 1200);
+            const commentsPromise = simulateAPI('comments', [{ id: 1, text: 'Great job!' }], false, 800);
+            
+            // TODO: Use Promise.all to wait for all promises
+            // Promise.all([userPromise, postsPromise, commentsPromise])
+            //     .then(results => {
+            //         log(`✅ All resources loaded! User: ${results[0].data.name}, Posts: ${results[1].data.length}`);
+            //         updatePlayerStatus("🏃‍♂️ ALL RESOURCES LOADED!");
+            //     })
+            //     .catch(error => {
+            //         log(`❌ One or more requests failed: ${error.message}`, true);
+            //         updatePlayerStatus("💀 RESOURCE LOAD FAILED!");
+            //     });
+        }
+        
+        function attemptObstacle3() {
+            log("🎯 Attempting Obstacle 3: Promise.race");
+            updatePlayerStatus("🏃‍♂️ RACING TO COMPLETION...", true);
+            
+            // TASK 3: Use Promise.race to get the fastest response
+            const fastAPI = simulateAPI('fast-server', { data: 'Quick response' }, false, 500);
+            const slowAPI = simulateAPI('slow-server', { data: 'Slow response' }, false, 2000);
+            const unreliableAPI = simulateAPI('unreliable', { data: 'Maybe fails' }, true, 800);
+            
+            // TODO: Use Promise.race to get the first completed promise
+            // Promise.race([fastAPI, slowAPI, unreliableAPI])
+            //     .then(result => {
+            //         log(`✅ Fastest response from: ${result.endpoint} (${result.data.data})`);
+            //         updatePlayerStatus("🏃‍♂️ RACE COMPLETED!");
+            //     })
+            //     .catch(error => {
+            //         log(`❌ Fastest promise failed: ${error.message}`, true);
+            //         updatePlayerStatus("💀 RACE LOST!");
+            //     });
+        }
+        
+        async function attemptObstacle4() {
+            log("🎯 Attempting Obstacle 4: Async/Await Sequence");
+            updatePlayerStatus("🏃‍♂️ EXECUTING SEQUENTIAL TASKS...", true);
+            
+            // TASK 4: Use async/await to complete tasks in sequence
+            
+            // TODO: Create async function that:
+            // 1. Fetches player profile (2 seconds)
+            // 2. Then fetches player equipment (1.5 seconds)
+            // 3. Then fetches player skills (1 second)
+            // 4. Logs each step as it completes
+            
+            // async function completeCourse() {
+            //     try {
+            //         const profile = await simulateAPI('profile', { name: 'Runner', level: 3 }, false, 2000);
+            //         log(`📋 Profile loaded: ${profile.data.name}`);
+            //         
+            //         // Add remaining steps here
+            //         
+            //         log(`✅ Course completed! All tasks finished!`);
+            //         updatePlayerStatus("🏆 COURSE MASTER!");
+            //     } catch (error) {
+            //         log(`❌ Course failed: ${error.message}`, true);
+            //         updatePlayerStatus("💀 COURSE FAILED!");
+            //     }
+            // }
+            // 
+            // completeCourse();
+        }
+        
+        async function attemptBossBattle() {
+            log("⚔️ BOSS BATTLE: Error Handling!");
+            updatePlayerStatus("⚔️ FIGHTING THE ERROR BOSS...", true);
+            
+            // TASK 5: Handle multiple error scenarios with try/catch
+            
+            // TODO: Create async function that:
+            // 1. Attempts unreliable API that may fail
+            // 2. If fails, tries backup API
+            // 3. If backup fails, provides fallback data
+            // 4. Logs the final result
+            
+            // async function fightBoss() {
+            //     try {
+            //         // Attempt main API with 50% fail chance
+            //         const mainResult = await simulateAPI('main-server', { data: 'Main data' }, Math.random() > 0.5, 1000);
+            //         log(`✅ Victory! Got data from main server: ${mainResult.data.data}`);
+            //         updatePlayerStatus("🏆 BOSS DEFEATED!");
+            //     } catch (error) {
+            //         log(`⚠️ Main server failed: ${error.message}`, true);
+            //         
+            //         // TODO: Try backup API
+            //         // TODO: If backup fails, use cached data
+            //     }
+            // }
+            // 
+            // fightBoss();
+        }
+        
+        function resetGame() {
+            document.getElementById('gameLog').innerHTML = '<strong>🎮 GAME LOG:</strong><br>Game restarted!<br>';
+            updatePlayerStatus("🏃‍♂️ PLAYER READY");
+            log("🔄 Game has been reset!");
+        }
+        
+        async function autoCompleteDemo() {
+            log("🤖 Running auto-complete demo (showing correct solutions)...");
+            
+            // Demo of correct solutions
+            try {
+                const user = await simulateAPI('user', { name: 'Demo User', level: 10 }, false, 500);
+                log(`📝 Demo: User fetched - ${user.data.name}`);
+                
+                const [posts, comments] = await Promise.all([
+                    simulateAPI('posts', [{ id: 1 }], false, 400),
+                    simulateAPI('comments', [{ id: 1 }], false, 300)
+                ]);
+                log(`📝 Demo: Promise.all completed - ${posts.data.length} posts, ${comments.data.length} comments`);
+                
+                const race = await Promise.race([
+                    simulateAPI('fast', { result: 'fast' }, false, 200),
+                    simulateAPI('slow', { result: 'slow' }, false, 1000)
+                ]);
+                log(`📝 Demo: Promise.race winner - ${race.endpoint}`);
+                
+                updatePlayerStatus("🤖 DEMO COMPLETED!");
+                log("✨ Demo completed! Now try the obstacles yourself!");
+            } catch (error) {
+                log(`Demo error: ${error.message}`, true);
+            }
+        }
+        
+        console.log(`
+        💡 PROMISE HINTS:
+        1. Promise.then().catch() for handling
+        2. Promise.all() for parallel execution
+        3. Promise.race() for fastest result
+        4. async/await for synchronous-style code
+        5. try/catch for error handling in async functions
+        `);
+    </script>
+</body>
+</html>

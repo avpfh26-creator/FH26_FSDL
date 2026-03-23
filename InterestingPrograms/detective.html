@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Destructuring Detective</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #1a1a2e;
+            color: white;
+            padding: 20px;
+        }
+        
+        .case-file {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #16213e;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        
+        .evidence {
+            background: #0f3460;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-family: monospace;
+        }
+        
+        .clue {
+            border-left: 4px solid #e94560;
+            padding-left: 15px;
+            margin: 15px 0;
+        }
+        
+        button {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        
+        button:hover {
+            background: #ff6b6b;
+        }
+        
+        .success {
+            color: #4ade80;
+            font-weight: bold;
+        }
+        
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 5px;
+            border: none;
+        }
+        
+        .code-box {
+            background: #0a0a0a;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="case-file">
+        <h1>🕵️ DESTRUCTURING DETECTIVE</h1>
+        <p><em>"Extract the truth from nested data structures!"</em></p>
+        
+        <div class="evidence">
+            <h3>📋 CASE EVIDENCE #1: Suspect Database</h3>
+            <div id="evidence1" class="code-box">
+                const suspect = {
+                    name: "Prof. Plum",
+                    alias: "The Professor",
+                    location: { room: "Library", floor: 2, time: "23:45" },
+                    weapons: ["Rope", "Candlestick", "Revolver"],
+                    alibi: { verified: false, witness: "Mrs. Peacock" }
+                };
+            </div>
+        </div>
+        
+        <div class="clue">
+            <h3>🔍 CLUE #1: Extract Suspect Details</h3>
+            <button onclick="solveClue1()">Extract Using Destructuring</button>
+            <div id="clue1Result"></div>
+        </div>
+        
+        <div class="evidence">
+            <h3>📋 CASE EVIDENCE #2: Crime Scene Logs</h3>
+            <div class="code-box">
+                const crimeLogs = [
+                    { time: "23:00", action: "Entered mansion", person: "Plum" },
+                    { time: "23:15", action: "Went to library", person: "Plum" },
+                    { time: "23:30", action: "Heard noise", person: "Scarlet" },
+                    { time: "23:45", action: "Scream heard", person: "Unknown" }
+                ];
+            </div>
+        </div>
+        
+        <div class="clue">
+            <h3>🔍 CLUE #2: Find the Crime Pattern</h3>
+            <button onclick="solveClue2()">Destructure Array of Objects</button>
+            <div id="clue2Result"></div>
+        </div>
+        
+        <div class="evidence">
+            <h3>📋 CASE EVIDENCE #3: Secret Message</h3>
+            <div class="code-box">
+                const encodedMessage = ["SECRET", "KEY", ["IS", ["HIDDEN", "IN"], "NESTED"], "ARRAY"];
+            </div>
+        </div>
+        
+        <div class="clue">
+            <h3>🔍 CLUE #3: Decode the Message</h3>
+            <button onclick="solveClue3()">Nested Destructuring</button>
+            <div id="clue3Result"></div>
+        </div>
+        
+        <div class="evidence">
+            <h3>📋 CASE EVIDENCE #4: Weapon Combinations</h3>
+            <div class="code-box">
+                const weapons = ["Dagger", "Lead Pipe", "Wrench", "Rope"];
+                const rooms = ["Kitchen", "Ballroom", "Conservatory", "Billiard Room"];
+            </div>
+        </div>
+        
+        <div class="clue">
+            <h3>🔍 CLUE #4: Swap Weapons with Rooms</h3>
+            <button onclick="solveClue4()">Array Destructuring Swap</button>
+            <div id="clue4Result"></div>
+        </div>
+        
+        <div class="evidence">
+            <h3>🎯 BONUS: Create Your Own Crime Scene</h3>
+            <input type="text" id="suspectName" placeholder="Suspect name" />
+            <input type="text" id="weapon" placeholder="Weapon" />
+            <input type="text" id="room" placeholder="Room" />
+            <button onclick="createCrimeScene()">Create Case File</button>
+            <div id="bonusResult"></div>
+        </div>
+        
+        <div id="solution" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        // Evidence Data
+        const suspect = {
+            name: "Prof. Plum",
+            alias: "The Professor",
+            location: { room: "Library", floor: 2, time: "23:45" },
+            weapons: ["Rope", "Candlestick", "Revolver"],
+            alibi: { verified: false, witness: "Mrs. Peacock" }
+        };
+        
+        const crimeLogs = [
+            { time: "23:00", action: "Entered mansion", person: "Plum" },
+            { time: "23:15", action: "Went to library", person: "Plum" },
+            { time: "23:30", action: "Heard noise", person: "Scarlet" },
+            { time: "23:45", action: "Scream heard", person: "Unknown" }
+        ];
+        
+        const encodedMessage = ["SECRET", "KEY", ["IS", ["HIDDEN", "IN"], "NESTED"], "ARRAY"];
+        let weapons = ["Dagger", "Lead Pipe", "Wrench", "Rope"];
+        let rooms = ["Kitchen", "Ballroom", "Conservatory", "Billiard Room"];
+        
+        // STUDENT TASKS
+        
+        function solveClue1() {
+            // TASK 1: Use object destructuring to extract:
+            // - name, alias
+            // - room from location
+            // - first weapon from weapons array
+            // - alibi witness
+            
+            // TODO: Destructure the suspect object
+            // const { ... } = suspect;
+            
+            // TODO: Create message using extracted variables
+            const message = "Extract suspect details here...";
+            
+            document.getElementById('clue1Result').innerHTML = `
+                <div class="code-box">
+                    <strong>🔎 EXTRACTED EVIDENCE:</strong><br>
+                    ${message}
+                </div>
+            `;
+        }
+        
+        function solveClue2() {
+            // TASK 2: Use array destructuring and object destructuring
+            // to find who was at the scene at 23:45
+            
+            // TODO: Destructure the third log (index 2) to get time, action, person
+            // TODO: Destructure the last log (index 3) to get the unknown person
+            
+            // HINT: const [, , thirdLog] = crimeLogs;
+            // HINT: const { person: suspectAt2330 } = thirdLog;
+            
+            document.getElementById('clue2Result').innerHTML = `
+                <div class="code-box">
+                    <strong>🔎 TIMELINE ANALYSIS:</strong><br>
+                    Implement destructuring to solve this clue!
+                </div>
+            `;
+        }
+        
+        function solveClue3() {
+            // TASK 3: Use nested destructuring to extract the hidden message
+            // The secret message is "HIDDEN IN NESTED ARRAY"
+            
+            // TODO: Destructure encodedMessage to extract the words
+            // const [first, second, [third, [fourth, fifth], sixth], seventh] = encodedMessage;
+            
+            const secretMessage = "Implement nested destructuring!";
+            
+            document.getElementById('clue3Result').innerHTML = `
+                <div class="code-box">
+                    <strong>🔎 DECODED MESSAGE:</strong><br>
+                    ${secretMessage}
+                </div>
+            `;
+        }
+        
+        function solveClue4() {
+            // TASK 4: Use array destructuring to swap weapons and rooms
+            // After swapping, first weapon should be first room, etc.
+            
+            // TODO: Use destructuring to swap arrays
+            // [weapons, rooms] = [rooms, weapons];
+            
+            document.getElementById('clue4Result').innerHTML = `
+                <div class="code-box">
+                    <strong>🔎 AFTER SWAPPING:</strong><br>
+                    Weapons: ${weapons.join(", ")}<br>
+                    Rooms: ${rooms.join(", ")}
+                </div>
+            `;
+        }
+        
+        function createCrimeScene() {
+            // BONUS: Use destructuring with default values and renaming
+            const name = document.getElementById('suspectName').value || "Unknown";
+            const weapon = document.getElementById('weapon').value || "No weapon";
+            const room = document.getElementById('room').value || "Unknown room";
+            
+            // TODO: Create an object with destructuring from form inputs
+            // TODO: Use object destructuring with default values
+            
+            document.getElementById('bonusResult').innerHTML = `
+                <div class="code-box">
+                    <strong>🎬 CRIME SCENE CREATED:</strong><br>
+                    ${name} committed the crime in the ${room} with the ${weapon}!
+                </div>
+            `;
+        }
+        
+        // Answer checker (to be implemented by students)
+        function checkAnswers() {
+            // Students can verify their solutions here
+        }
+        
+        // Hints
+        console.log(`
+        💡 DESTRUCTURING HINTS:
+        1. Object destructuring: const { property } = object
+        2. Renaming: const { property: newName } = object
+        3. Nested: const { nested: { deeper } } = object
+        4. Array: const [first, second] = array
+        5. Swap: [a, b] = [b, a]
+        `);
+    </script>
+</body>
+</html>

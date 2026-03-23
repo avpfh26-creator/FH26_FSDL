@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spread & Rest Rangers</title>
+    <style>
+        body {
+            font-family: 'Comic Neue', 'Comic Sans MS', cursive;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 20px;
+        }
+        
+        .hero-hq {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .hero-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 10px;
+            display: inline-block;
+            width: 200px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .hero-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .team-section {
+            border: 2px solid #f5576c;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            min-height: 150px;
+        }
+        
+        button {
+            background: #f5576c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background: #ff6b6b;
+            transform: scale(1.05);
+        }
+        
+        .power-meter {
+            background: #e0e0e0;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+        
+        .power-fill {
+            background: #4ade80;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .mission-log {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+        
+        input {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-hq">
+        <h1>🦸 SPREAD & REST RANGERS 🦸‍♀️</h1>
+        <p><em>"Assemble your ultimate superhero team!"</em></p>
+        
+        <div id="heroList">
+            <h3>🌟 AVAILABLE HEROES</h3>
+            <div id="availableHeroes"></div>
+        </div>
+        
+        <div class="team-section">
+            <h3>⚡ YOUR SUPERHERO TEAM</h3>
+            <div id="yourTeam"></div>
+            <div class="power-meter">
+                <div id="teamPowerFill" class="power-fill"></div>
+            </div>
+            <div>Total Power: <span id="totalPower">0</span></div>
+        </div>
+        
+        <div class="team-section">
+            <h3>🎯 MISSION CONTROL</h3>
+            <button onclick="mission1()">🚀 Mission 1: Spread to Create Backup Team</button>
+            <button onclick="mission2()">🔀 Mission 2: Rest Parameters for Team Formation</button>
+            <button onclick="mission3()">🔄 Mission 3: Combine Teams with Spread</button>
+            <button onclick="mission4()">💪 Mission 4: Calculate Combined Power (Rest)</button>
+            <button onclick="resetGame()">🔄 Reset Team</button>
+        </div>
+        
+        <div class="mission-log">
+            <strong>📋 MISSION LOG:</strong>
+            <div id="missionLog"></div>
+        </div>
+        
+        <div>
+            <h3>➕ CREATE CUSTOM HERO</h3>
+            <input type="text" id="heroName" placeholder="Hero Name" />
+            <input type="number" id="heroPower" placeholder="Power Level (1-100)" />
+            <button onclick="addCustomHero()">Create Hero</button>
+        </div>
+    </div>
+
+    <script>
+        // Initial Data
+        let availableHeroes = [
+            { name: "Captain JavaScript", power: 95, ability: "Spread Shot" },
+            { name: "Arrow Function", power: 88, ability: "Rapid Fire" },
+            { name: "Destructuring Woman", power: 92, ability: "Data Extraction" },
+            { name: "Template Man", power: 78, ability: "String Weaving" },
+            { name: "Promise Keeper", power: 85, ability: "Async Strike" }
+        ];
+        
+        let yourTeam = [];
+        
+        function log(message) {
+            const logDiv = document.getElementById('missionLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML = `[${timestamp}] ${message}<br>` + logDiv.innerHTML;
+        }
+        
+        function renderHeroes() {
+            // TASK 1: Use spread operator to create new array for rendering
+            // TODO: Create a copy of availableHeroes using spread
+            const heroesToRender = availableHeroes; // Fix this!
+            
+            const heroHtml = heroesToRender.map((hero, index) => `
+                <div class="hero-card" onclick="recruitHero(${index})">
+                    <strong>${hero.name}</strong><br>
+                    ⚡ Power: ${hero.power}<br>
+                    🎯 ${hero.ability}<br>
+                    <small>Click to recruit!</small>
+                </div>
+            `).join('');
+            
+            document.getElementById('availableHeroes').innerHTML = heroHtml || "<p>No heroes available!</p>";
+            
+            // Render your team
+            const teamHtml = yourTeam.map((hero, index) => `
+                <div class="hero-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <strong>${hero.name}</strong><br>
+                    ⚡ Power: ${hero.power}<br>
+                    🎯 ${hero.ability}<br>
+                    <button onclick="removeHero(${index})">Remove</button>
+                </div>
+            `).join('');
+            
+            document.getElementById('yourTeam').innerHTML = teamHtml || "<p>Your team is empty. Recruit heroes!</p>";
+            
+            // Calculate total power
+            const total = yourTeam.reduce((sum, hero) => sum + hero.power, 0);
+            document.getElementById('totalPower').innerText = total;
+            const powerPercent = (total / 500) * 100;
+            document.getElementById('teamPowerFill').style.width = `${Math.min(powerPercent, 100)}%`;
+        }
+        
+        function recruitHero(index) {
+            // TASK 2: Use spread operator to add hero to team
+            // TODO: Add the hero to yourTeam using spread
+            // TODO: Remove from availableHeroes using filter
+            
+            const hero = availableHeroes[index];
+            if (hero) {
+                // Your code here
+                log(`🦸 ${hero.name} joined your team!`);
+                renderHeroes();
+            }
+        }
+        
+        function removeHero(index) {
+            // TASK 3: Use spread to return hero to available list
+            const hero = yourTeam[index];
+            if (hero) {
+                // TODO: Remove from yourTeam
+                // TODO: Add back to availableHeroes using spread
+                log(`😢 ${hero.name} left the team`);
+                renderHeroes();
+            }
+        }
+        
+        function mission1() {
+            // MISSION 1: Create a backup team using spread operator
+            // Goal: Create a copy of yourTeam called backupTeam
+            
+            // TODO: Use spread to create a shallow copy
+            const backupTeam = []; // Fix this!
+            
+            log(`📋 Mission 1: Created backup team with ${backupTeam.length} members`);
+            log(`💡 Backup team is a ${backupTeam === yourTeam ? 'reference' : 'copy'} of original team`);
+        }
+        
+        function mission2() {
+            // MISSION 2: Use rest parameters to form a special team
+            // Goal: Create function that accepts any number of heroes
+            
+            // TODO: Implement formSpecialTeam using rest parameters
+            function formSpecialTeam(...heroes) {
+                // This function should log all heroes that would form the special team
+                log(`🌟 Special Team Formation:`);
+                heroes.forEach((hero, i) => {
+                    log(`   ${i+1}. ${hero.name} (Power: ${hero.power})`);
+                });
+                return heroes;
+            }
+            
+            // Call with different numbers of heroes
+            if (yourTeam.length > 0) {
+                const specialTeam = formSpecialTeam(...yourTeam.slice(0, 3));
+                log(`🎯 Mission 2: Special team assembled with ${specialTeam.length} heroes!`);
+            } else {
+                log(`⚠️ Mission 2: Need at least 1 hero in your team!`);
+            }
+        }
+        
+        function mission3() {
+            // MISSION 3: Combine two teams using spread operator
+            // Goal: Create ultimate team by combining yourTeam with reserve heroes
+            
+            const reserveHeroes = [
+                { name: "Mega Mind", power: 100, ability: "Super Intelligence" },
+                { name: "Power Pack", power: 95, ability: "Strength Boost" }
+            ];
+            
+            // TODO: Combine yourTeam and reserveHeroes using spread
+            const ultimateTeam = []; // Fix this!
+            
+            log(`🚀 Mission 3: Ultimate team created with ${ultimateTeam.length} heroes!`);
+            log(`   Combined power: ${ultimateTeam.reduce((sum, h) => sum + h.power, 0)}`);
+        }
+        
+        function mission4() {
+            // MISSION 4: Calculate total power using rest parameters
+            // Goal: Create function that sums power of unlimited heroes
+            
+            // TODO: Implement calculateTotalPower using rest parameters
+            function calculateTotalPower(...heroes) {
+                // Should return sum of all hero powers
+                return 0; // Fix this!
+            }
+            
+            const total = calculateTotalPower(...yourTeam);
+            log(`💪 Mission 4: Total team power is ${total}`);
+            
+            // Bonus: Average power
+            const avg = yourTeam.length ? total / yourTeam.length : 0;
+            log(`📊 Average hero power: ${avg.toFixed(1)}`);
+        }
+        
+        function addCustomHero() {
+            const name = document.getElementById('heroName').value;
+            const power = parseInt(document.getElementById('heroPower').value);
+            
+            if (name && power >= 1 && power <= 100) {
+                // TODO: Add new hero to availableHeroes using spread
+                const newHero = { name, power, ability: "Custom Power" };
+                // availableHeroes = [...availableHeroes, newHero]; // Fix this line!
+                log(`✨ New hero "${name}" (Power: ${power}) created and added to available heroes!`);
+                renderHeroes();
+                
+                // Clear inputs
+                document.getElementById('heroName').value = '';
+                document.getElementById('heroPower').value = '';
+            } else {
+                log(`❌ Invalid hero data! Power must be 1-100 and name required.`);
+            }
+        }
+        
+        function resetGame() {
+            // Reset to initial state
+            availableHeroes = [
+                { name: "Captain JavaScript", power: 95, ability: "Spread Shot" },
+                { name: "Arrow Function", power: 88, ability: "Rapid Fire" },
+                { name: "Destructuring Woman", power: 92, ability: "Data Extraction" },
+                { name: "Template Man", power: 78, ability: "String Weaving" },
+                { name: "Promise Keeper", power: 85, ability: "Async Strike" }
+            ];
+            yourTeam = [];
+            log(`🔄 Game reset! All heroes available again.`);
+            renderHeroes();
+        }
+        
+        // Initial render
+        renderHeroes();
+        log(`🎮 Welcome to Spread & Rest Rangers! Recruit heroes to begin.`);
+        
+        console.log(`
+        💡 SPREAD & REST HINTS:
+        1. Spread (...): Expands arrays/objects: [...array], {...object}
+        2. Rest (...): Collects remaining arguments: (...args) => {}
+        3. Spread for copying: const copy = [...original]
+        4. Spread for combining: const combined = [...arr1, ...arr2]
+        5. Rest for variable arguments: function sum(...numbers) {}
+        `);
+    </script>
+</body>
+</html>

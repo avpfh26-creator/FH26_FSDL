@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Arena - Real-time Battle Arena</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .arena {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.8);
+            border-radius: 20px;
+            padding: 20px;
+            border: 2px solid #e94560;
+        }
+        
+        .battle-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 20px;
+        }
+        
+        .player-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        .enemy-card {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        }
+        
+        .health-bar {
+            width: 100%;
+            height: 20px;
+            background: #2c3e50;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .health-fill {
+            height: 100%;
+            background: #2ecc71;
+            transition: width 0.3s;
+            width: 100%;
+        }
+        
+        .chat-container {
+            background: #0a0a0a;
+            border-radius: 10px;
+            margin-top: 20px;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            color: #0f0;
+            font-size: 12px;
+        }
+        
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            gap: 10px;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            background: #1a1a2e;
+            color: #0f0;
+            border: 1px solid #e94560;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        
+        .action-log {
+            background: #0a0a0a;
+            border-radius: 10px;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            color: #0f0;
+            margin-top: 10px;
+        }
+        
+        button {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+            background: #ff6b6b;
+        }
+        
+        .skill-button {
+            background: #3498db;
+        }
+        
+        .ultimate-button {
+            background: #f39c12;
+        }
+        
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: #2c3e50;
+            color: white;
+            font-size: 12px;
+        }
+        
+        .online-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #2ecc71;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .player-list {
+            background: #16213e;
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        
+        .player-item {
+            padding: 5px;
+            margin: 5px;
+            background: #0f3460;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .player-item:hover {
+            background: #e94560;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #e94560;
+            padding: 10px;
+            border-radius: 10px;
+            animation: slideUp 0.5s;
+            z-index: 1000;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="arena">
+        <h1 style="color:#e94560; text-align:center;">⚔️ WEBSOCKET ARENA ⚔️</h1>
+        <p style="color:#fff; text-align:center;">Real-time multiplayer battle arena!</p>
+        
+        <div class="connection-status" id="connectionStatus">
+            <span class="online-status"></span> Connecting...
+        </div>
+        
+        <div class="battle-grid">
+            <div class="player-card">
+                <h2>👤 YOU</h2>
+                <div id="playerName" style="font-size: 24px;">Player 1</div>
+                <div>❤️ HP: <span id="playerHP">100</span>/<span id="playerMaxHP">100</span></div>
+                <div class="health-bar">
+                    <div class="health-fill" id="playerHealthFill" style="width: 100%"></div>
+                </div>
+                <div>⚔️ Attack: <span id="playerAttack">25</span></div>
+                <div>🛡️ Defense: <span id="playerDefense">10</span></div>
+                <div>✨ Mana: <span id="playerMana">100</span>/100</div>
+                
+                <div style="margin-top: 15px;">
+                    <button class="skill-button" onclick="useSkill('attack')">⚔️ Attack</button>
+                    <button class="skill-button" onclick="useSkill('fireball')">🔥 Fireball</button>
+                    <button class="skill-button" onclick="useSkill('heal')">💚 Heal</button>
+                    <button class="ultimate-button" onclick="useSkill('ultimate')">💥 ULTIMATE</button>
+                </div>
+            </div>
+            
+            <div>
+                <div class="enemy-card" id="enemyDisplay">
+                    <h2>👾 NO ENEMY</h2>
+                    <div>Waiting for opponent...</div>
+                </div>
+                
+                <div class="action-log" id="actionLog">
+                    <strong>📜 BATTLE LOG:</strong><br>
+                    Connecting to arena...
+                </div>
+            </div>
+            
+            <div>
+                <div class="player-card">
+                    <h2>🌐 ONLINE PLAYERS</h2>
+                    <div id="playerList" class="player-list">
+                        <div>Loading players...</div>
+                    </div>
+                    <button onclick="challengeRandom()">🎯 Challenge Random</button>
+                    <button onclick="broadcastEmote()">😊 Send Emote</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <strong>💬 GLOBAL CHAT:</strong><br>
+                Welcome to the arena!
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="Type a message..." onkeypress="handleChatKeypress(event)">
+                <button onclick="sendChatMessage()">Send</button>
+                <button onclick="sendPrivateMessage()">🔒 Private</button>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 10px;">
+            <button onclick="createMatch()">🎮 Create Match</button>
+            <button onclick="joinRandomMatch()">🎲 Join Random Match</button>
+            <button onclick="spectate()">👁️ Spectate</button>
+            <button onclick="resetGame()">🔄 Reset Game</button>
+        </div>
+    </div>
+
+    <script>
+        // ============ WEBSOCKET CONNECTION ============
+        let ws;
+        let playerId = Math.random().toString(36).substr(2, 9);
+        let playerName = `Player_${playerId.substr(0, 4)}`;
+        let currentMatch = null;
+        let playerData = {
+            hp: 100,
+            maxHp: 100,
+            mana: 100,
+            attack: 25,
+            defense: 10,
+            level: 1
+        };
+        
+        // ============ STUDENT TASKS ============
+        
+        // TASK 1: Establish WebSocket connection
+        function connectWebSocket() {
+            // TODO: Create WebSocket connection
+            // Use wss://echo.websocket.org for testing or create your own server
+            const wsUrl = "wss://echo.websocket.org"; // Demo endpoint
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                // Student code: Handle connection open
+                updateConnectionStatus(true);
+                addToLog("✅ Connected to arena server!");
+                sendMessage({
+                    type: 'join',
+                    playerId: playerId,
+                    playerName: playerName,
+                    playerData: playerData
+                });
+            };
+            
+            ws.onmessage = (event) => {
+                // TODO: Handle incoming messages
+                try {
+                    const data = JSON.parse(event.data);
+                    handleIncomingMessage(data);
+                } catch (error) {
+                    addToLog(`❌ Error parsing message: ${error.message}`, true);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                // TODO: Handle connection errors
+                addToLog(`❌ WebSocket error: ${error}`, true);
+                updateConnectionStatus(false);
+            };
+            
+            ws.onclose = () => {
+                // TODO: Handle disconnection
+                addToLog("⚠️ Disconnected from server!", true);
+                updateConnectionStatus(false);
+                
+                // Attempt to reconnect after 3 seconds
+                setTimeout(() => {
+                    addToLog("🔄 Attempting to reconnect...");
+                    connectWebSocket();
+                }, 3000);
+            };
+        }
+        
+        // TASK 2: Handle different message types
+        function handleIncomingMessage(data) {
+            switch(data.type) {
+                case 'player_joined':
+                    // TODO: Add player to online list
+                    addToLog(`✨ ${data.playerName} joined the arena!`);
+                    updatePlayerList(data.players);
+                    break;
+                    
+                case 'match_started':
+                    // TODO: Start battle with opponent
+                    currentMatch = data.matchId;
+                    updateEnemyDisplay(data.opponent);
+                    addToLog(`⚔️ Match started! Fighting against ${data.opponent.name}!`);
+                    break;
+                    
+                case 'battle_action':
+                    // TODO: Process battle action
+                    processBattleAction(data);
+                    break;
+                    
+                case 'chat_message':
+                    // TODO: Display chat message
+                    addChatMessage(data.sender, data.message, data.isPrivate);
+                    break;
+                    
+                case 'player_left':
+                    // TODO: Remove player from list
+                    addToLog(`👋 ${data.playerName} left the arena`);
+                    removePlayerFromList(data.playerId);
+                    break;
+                    
+                case 'emote':
+                    // TODO: Show emote animation
+                    showEmote(data.playerName, data.emote);
+                    break;
+                    
+                default:
+                    addToLog(`📨 Unknown message type: ${data.type}`);
+            }
+        }
+        
+        // TASK 3: Implement battle actions with WebSocket
+        function useSkill(skill) {
+            if (!currentMatch) {
+                addToLog("⚠️ You're not in a match! Create or join one first.", true);
+                return;
+            }
+            
+            // TODO: Calculate damage/heal based on skill
+            let action = {
+                type: 'battle_action',
+                matchId: currentMatch,
+                playerId: playerId,
+                skill: skill,
+                timestamp: Date.now()
+            };
+            
+            // Calculate action effects
+            switch(skill) {
+                case 'attack':
+                    const damage = Math.floor(Math.random() * playerData.attack) + 10;
+                    action.damage = damage;
+                    addToLog(`⚔️ You attack for ${damage} damage!`);
+                    break;
+                    
+                case 'fireball':
+                    if (playerData.mana >= 30) {
+                        playerData.mana -= 30;
+                        const damage = Math.floor(Math.random() * playerData.attack * 1.5) + 20;
+                        action.damage = damage;
+                        action.manaCost = 30;
+                        updatePlayerStats();
+                        addToLog(`🔥 You cast Fireball for ${damage} damage!`);
+                    } else {
+                        addToLog("❌ Not enough mana for Fireball!", true);
+                        return;
+                    }
+                    break;
+                    
+                case 'heal':
+                    if (playerData.mana >= 20) {
+                        playerData.mana -= 20;
+                        const healAmount = Math.floor(Math.random() * 30) + 20;
+                        playerData.hp = Math.min(playerData.maxHp, playerData.hp + healAmount);
+                        action.heal = healAmount;
+                        action.manaCost = 20;
+                        updatePlayerStats();
+                        addToLog(`💚 You heal for ${healAmount} HP!`);
+                    } else {
+                        addToLog("❌ Not enough mana to heal!", true);
+                        return;
+                    }
+                    break;
+                    
+                case 'ultimate':
+                    if (playerData.mana >= 100) {
+                        playerData.mana = 0;
+                        const damage = Math.floor(Math.random() * playerData.attack * 3) + 50;
+                        action.damage = damage;
+                        action.manaCost = 100;
+                        addToLog(`💥 ULTIMATE ATTACK! ${damage} damage!`);
+                        showNotification("ULTIMATE ATTACK!");
+                    } else {
+                        addToLog(`❌ Need 100 mana for ultimate! Current: ${playerData.mana}`, true);
+                        return;
+                    }
+                    break;
+            }
+            
+            // Send action to server
+            sendMessage(action);
+            updatePlayerStats();
+        }
+        
+        // TASK 4: Process incoming battle actions
+        function processBattleAction(data) {
+            // TODO: Update player or enemy based on action
+            if (data.playerId !== playerId) {
+                // Enemy is attacking
+                if (data.damage) {
+                    const reducedDamage = Math.max(1, data.damage - playerData.defense);
+                    playerData.hp = Math.max(0, playerData.hp - reducedDamage);
+                    addToLog(`💥 ${data.playerName} deals ${reducedDamage} damage to you!`);
+                    updatePlayerStats();
+                    
+                    if (playerData.hp <= 0) {
+                        addToLog("💀 You have been defeated!", true);
+                        showNotification("DEFEATED!");
+                        endMatch();
+                    }
+                }
+                
+                if (data.heal) {
+                    addToLog(`💚 ${data.playerName} heals for ${data.heal} HP!`);
+                }
+            } else {
+                // Your action against enemy
+                if (data.damage) {
+                    addToLog(`⚔️ You deal ${data.damage} damage to ${data.targetName}!`);
+                }
+            }
+        }
+        
+        // TASK 5: Implement chat system with WebSocket
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                // TODO: Send chat message via WebSocket
+                sendMessage({
+                    type: 'chat_message',
+                    playerId: playerId,
+                    playerName: playerName,
+                    message: message,
+                    isPrivate: false
+                });
+                
+                // Add to own chat
+                addChatMessage(playerName, message, false);
+                input.value = '';
+            }
+        }
+        
+        function sendPrivateMessage() {
+            // TODO: Implement private messaging
+            const targetPlayer = prompt("Enter player name to message:");
+            const message = prompt("Enter your private message:");
+            
+            if (targetPlayer && message) {
+                sendMessage({
+                    type: 'chat_message',
+                    playerId: playerId,
+                    playerName: playerName,
+                    targetPlayer: targetPlayer,
+                    message: message,
+                    isPrivate: true
+                });
+            }
+        }
+        
+        function handleChatKeypress(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+        
+        // TASK 6: Implement matchmaking system
+        function createMatch() {
+            // TODO: Create a new match
+            sendMessage({
+                type: 'create_match',
+                playerId: playerId,
+                playerName: playerName,
+                playerData: playerData
+            });
+            addToLog("🎮 Creating new match...");
+        }
+        
+        function joinRandomMatch() {
+            // TODO: Join random available match
+            sendMessage({
+                type: 'join_random_match',
+                playerId: playerId,
+                playerName: playerName
+            });
+            addToLog("🎲 Searching for random match...");
+        }
+        
+        function challengeRandom() {
+            // TODO: Challenge a random online player
+            sendMessage({
+                type: 'challenge_random',
+                playerId: playerId,
+                playerName: playerName
+            });
+            addToLog("🎯 Challenging random player...");
+        }
+        
+        // TASK 7: Implement spectator mode
+        function spectate() {
+            // TODO: Spectate an ongoing match
+            const matchId = prompt("Enter match ID to spectate:");
+            if (matchId) {
+                sendMessage({
+                    type: 'spectate',
+                    playerId: playerId,
+                    matchId: matchId
+                });
+                addToLog(`👁️ Spectating match: ${matchId}`);
+            }
+        }
+        
+        // TASK 8: Implement emote system
+        const emotes = ['😊', '🔥', '💀', '👑', '⚡', '💪', '🎯', '✨'];
+        
+        function broadcastEmote() {
+            const randomEmote = emotes[Math.floor(Math.random() * emotes.length)];
+            sendMessage({
+                type: 'emote',
+                playerId: playerId,
+                playerName: playerName,
+                emote: randomEmote
+            });
+            showEmote(playerName, randomEmote);
+        }
+        
+        function showEmote(player, emote) {
+            // TODO: Show floating emote animation
+            const emoteDiv = document.createElement('div');
+            emoteDiv.className = 'notification';
+            emoteDiv.innerHTML = `${player} ${emote}`;
+            document.body.appendChild(emoteDiv);
+            setTimeout(() => {
+                emoteDiv.remove();
+            }, 2000);
+        }
+        
+        // ============ HELPER FUNCTIONS ============
+        
+        function sendMessage(data) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(data));
+            } else {
+                addToLog("❌ Not connected to server!", true);
+            }
+        }
+        
+        function updateConnectionStatus(connected) {
+            const statusDiv = document.getElementById('connectionStatus');
+            if (connected) {
+                statusDiv.innerHTML = '<span class="online-status"></span> Connected';
+                statusDiv.style.background = '#27ae60';
+            } else {
+                statusDiv.innerHTML = '<span style="background:#e74c3c;"></span> Disconnected';
+                statusDiv.style.background = '#c0392b';
+            }
+        }
+        
+        function updatePlayerStats() {
+            document.getElementById('playerHP').innerText = playerData.hp;
+            document.getElementById('playerMaxHP').innerText = playerData.maxHp;
+            document.getElementById('playerAttack').innerText = playerData.attack;
+            document.getElementById('playerDefense').innerText = playerData.defense;
+            document.getElementById('playerMana').innerText = playerData.mana;
+            
+            const hpPercent = (playerData.hp / playerData.maxHp) * 100;
+            document.getElementById('playerHealthFill').style.width = `${hpPercent}%`;
+            
+            // Change color based on health
+            if (hpPercent < 30) {
+                document.getElementById('playerHealthFill').style.background = '#e74c3c';
+            } else if (hpPercent < 60) {
+                document.getElementById('playerHealthFill').style.background = '#f39c12';
+            } else {
+                document.getElementById('playerHealthFill').style.background = '#2ecc71';
+            }
+        }
+        
+        function updatePlayerList(players) {
+            const playerListDiv = document.getElementById('playerList');
+            if (players && players.length > 0) {
+                playerListDiv.innerHTML = players.map(p => `
+                    <div class="player-item" onclick="challengePlayer('${p.id}')">
+                        ${p.name} - Level ${p.level || 1}
+                    </div>
+                `).join('');
+            } else {
+                playerListDiv.innerHTML = '<div>No other players online</div>';
+            }
+        }
+        
+        function removePlayerFromList(playerId) {
+            // Implementation for removing player
+        }
+        
+        function updateEnemyDisplay(enemy) {
+            const enemyDiv = document.getElementById('enemyDisplay');
+            enemyDiv.innerHTML = `
+                <h2>👾 ${enemy.name}</h2>
+                <div>❤️ HP: ${enemy.hp}/${enemy.maxHp}</div>
+                <div class="health-bar">
+                    <div class="health-fill" style="width: ${(enemy.hp/enemy.maxHp)*100}%"></div>
+                </div>
+                <div>⚔️ Attack: ${enemy.attack}</div>
+                <div>🛡️ Defense: ${enemy.defense}</div>
+            `;
+        }
+        
+        function addToLog(message, isError = false) {
+            const logDiv = document.getElementById('actionLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = isError ? '#e74c3c' : '#2ecc71';
+            logDiv.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function addChatMessage(sender, message, isPrivate = false) {
+            const chatDiv = document.getElementById('chatMessages');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = isPrivate ? '🔒 PRIVATE: ' : '';
+            const color = isPrivate ? '#f39c12' : '#0f0';
+            chatDiv.innerHTML += `<div style="color: ${color}">[${timestamp}] ${prefix}${sender}: ${message}</div>`;
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
+        
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = message;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        function endMatch() {
+            currentMatch = null;
+            addToLog("🏁 Match ended!");
+            showNotification("Match Ended");
+        }
+        
+        function resetGame() {
+            playerData = {
+                hp: 100,
+                maxHp: 100,
+                mana: 100,
+                attack: 25,
+                defense: 10,
+                level: 1
+            };
+            currentMatch = null;
+            updatePlayerStats();
+            addToLog("🔄 Game reset!");
+        }
+        
+        function challengePlayer(playerId) {
+            addToLog(`🎯 Challenging player ${playerId}...`);
+            sendMessage({
+                type: 'challenge',
+                challengerId: playerId,
+                targetId: playerId
+            });
+        }
+        
+        // Initialize game
+        function init() {
+            document.getElementById('playerName').innerText = playerName;
+            connectWebSocket();
+            updatePlayerStats();
+            
+            // Regenerate mana over time
+            setInterval(() => {
+                if (playerData.mana < 100) {
+                    playerData.mana = Math.min(100, playerData.mana + 5);
+                    updatePlayerStats();
+                }
+            }, 3000);
+        }
+        
+        // Make functions global
+        window.useSkill = useSkill;
+        window.sendChatMessage = sendChatMessage;
+        window.sendPrivateMessage = sendPrivateMessage;
+        window.handleChatKeypress = handleChatKeypress;
+        window.createMatch = createMatch;
+        window.joinRandomMatch = joinRandomMatch;
+        window.spectate = spectate;
+        window.broadcastEmote = broadcastEmote;
+        window.resetGame = resetGame;
+        window.challengeRandom = challengeRandom;
+        window.challengePlayer = challengePlayer;
+        
+        init();
+        
+        console.log(`
+        💡 WEBSOCKET CHALLENGES:
+        1. Implement real-time voice chat
+        2. Add WebRTC video streaming
+        3. Create tournament bracket system
+        4. Implement spectator betting system
+        5. Add real-time leaderboard with Server-Sent Events
+        `);
+    </script>
+</body>
+</html>

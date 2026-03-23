@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Visualizer Studio - Beat Reactor</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .studio {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.8);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        canvas {
+            background: #000;
+            border-radius: 10px;
+            margin: 10px 0;
+            box-shadow: 0 0 20px rgba(0,255,255,0.3);
+        }
+        
+        .visualizer-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        
+        .controls {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        
+        button {
+            background: #00ffff;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0,255,255,0.5);
+        }
+        
+        .effect-button {
+            background: #ff00ff;
+            color: white;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .beat-indicator {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            margin: 10px 0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .beat-bar {
+            width: 0%;
+            height: 100%;
+            background: #ff00ff;
+            transition: width 0.05s;
+        }
+        
+        .frequency-bands {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .band {
+            height: 100px;
+            background: #00ffff;
+            transition: height 0.1s;
+        }
+        
+        .challenge-box {
+            background: #ff0066;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 10px #ff0066; }
+            50% { box-shadow: 0 0 20px #ff0066; }
+        }
+        
+        .mic-permission {
+            background: #ff9900;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        
+        select {
+            background: #000;
+            color: #0ff;
+            padding: 8px;
+            border: 1px solid #0ff;
+            border-radius: 5px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="studio">
+        <h1 style="color:#0ff; text-align:center;">🎵 AUDIO VISUALIZER STUDIO 🎧</h1>
+        <p style="color:#fff; text-align:center;">Create reactive audio visualizations!</p>
+        
+        <div class="visualizer-container">
+            <div>
+                <canvas id="waveformCanvas" width="600" height="200"></canvas>
+                <canvas id="spectrumCanvas" width="600" height="200"></canvas>
+                <canvas id="circularCanvas" width="600" height="200" style="display:none;"></canvas>
+            </div>
+            <div>
+                <canvas id="barsCanvas" width="300" height="400"></canvas>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <h3 style="color:#0ff;">🎛️ AUDIO CONTROLS</h3>
+            <button onclick="playTestTone()">🎵 Play Test Tone</button>
+            <button onclick="requestMicrophone()">🎤 Use Microphone</button>
+            <button onclick="loadSampleTrack()">📀 Load Sample Track</button>
+            <button onclick="stopAudio()">⏹️ Stop</button>
+            
+            <div class="mic-permission" onclick="requestMicrophone()">
+                🎤 Click here to enable microphone access!
+            </div>
+            
+            <h3 style="color:#0ff;">✨ VISUALIZATION MODES</h3>
+            <button onclick="setVisualization('waveform')">🌊 Waveform</button>
+            <button onclick="setVisualization('spectrum')">📊 Spectrum</button>
+            <button onclick="setVisualization('bars')">📈 Bars</button>
+            <button onclick="setVisualization('circular')">🔄 Circular</button>
+            <button onclick="setVisualization('particle')">✨ Particle System</button>
+            
+            <h3 style="color:#0ff;">🎨 EFFECTS</h3>
+            <button class="effect-button" onclick="addEffect('reverb')">✨ Reverb</button>
+            <button class="effect-button" onclick="addEffect('distortion')">🔥 Distortion</button>
+            <button class="effect-button" onclick="addEffect('delay')">⏱️ Delay</button>
+            <button class="effect-button" onclick="addEffect('filter')">🎚️ Filter</button>
+            
+            <div class="beat-indicator">
+                <div class="beat-bar" id="beatBar"></div>
+            </div>
+            
+            <div class="frequency-bands" id="frequencyBands"></div>
+        </div>
+        
+        <div class="challenge-box" id="challenge">
+            🎯 MISSION: Create a particle system that reacts to bass frequencies!
+            <br><small>Complete missions to earn badges!</small>
+        </div>
+        
+        <div style="margin-top: 10px;">
+            <button onclick="nextMission()">🎯 Next Mission</button>
+            <button onclick="recordVisualization()">💾 Record Visualization</button>
+            <button onclick="shareVisualization()">📤 Share Creation</button>
+        </div>
+    </div>
+
+    <script>
+        // Audio context setup
+        let audioContext;
+        let analyser;
+        let source;
+        let mediaStream;
+        let audioDataArray;
+        let currentVisualization = 'waveform';
+        let animationId;
+        
+        // Canvas elements
+        const waveformCanvas = document.getElementById('waveformCanvas');
+        const waveformCtx = waveformCanvas.getContext('2d');
+        const spectrumCanvas = document.getElementById('spectrumCanvas');
+        const spectrumCtx = spectrumCanvas.getContext('2d');
+        const barsCanvas = document.getElementById('barsCanvas');
+        const barsCtx = barsCanvas.getContext('2d');
+        const circularCanvas = document.getElementById('circularCanvas');
+        const circularCtx = circularCanvas.getContext('2d');
+        
+        // Initialize audio
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                audioDataArray = new Uint8Array(analyser.frequencyBinCount);
+            }
+        }
+        
+        // ============ STUDENT TASKS ============
+        
+        // TASK 1: Create test tone oscillator
+        function playTestTone() {
+            initAudio();
+            
+            // TODO: Create oscillator and connect to analyser
+            // Student code here
+            const oscillator = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            // Connect nodes
+            oscillator.connect(gain);
+            gain.connect(analyser);
+            analyser.connect(audioContext.destination);
+            
+            // Set frequency and waveform
+            oscillator.frequency.value = 440; // A4 note
+            oscillator.type = 'sine';
+            
+            // Start and stop after 2 seconds
+            oscillator.start();
+            setTimeout(() => {
+                oscillator.stop();
+            }, 2000);
+            
+            source = oscillator;
+            startVisualization();
+        }
+        
+        // TASK 2: Implement microphone input
+        async function requestMicrophone() {
+            try {
+                // TODO: Request microphone access and connect to analyser
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                initAudio();
+                
+                // Student code: Connect stream to audio context
+                // Hint: Use audioContext.createMediaStreamSource()
+                
+                startVisualization();
+            } catch (err) {
+                console.error('Microphone error:', err);
+                alert('Microphone access denied!');
+            }
+        }
+        
+        // TASK 3: Implement waveform visualization
+        function drawWaveform() {
+            if (!analyser) return;
+            
+            // Get time domain data
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteTimeDomainData(dataArray);
+            
+            // TODO: Draw waveform on canvas
+            waveformCtx.fillStyle = '#000';
+            waveformCtx.fillRect(0, 0, waveformCanvas.width, waveformCanvas.height);
+            
+            waveformCtx.beginPath();
+            waveformCtx.strokeStyle = '#0ff';
+            waveformCtx.lineWidth = 2;
+            
+            const sliceWidth = waveformCanvas.width / dataArray.length;
+            let x = 0;
+            
+            // Student code: Plot waveform points
+            for (let i = 0; i < dataArray.length; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = (v * waveformCanvas.height) / 2;
+                
+                if (i === 0) {
+                    waveformCtx.moveTo(x, y);
+                } else {
+                    waveformCtx.lineTo(x, y);
+                }
+                x += sliceWidth;
+            }
+            
+            waveformCtx.stroke();
+        }
+        
+        // TASK 4: Implement frequency spectrum visualization
+        function drawSpectrum() {
+            if (!analyser) return;
+            
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(dataArray);
+            
+            // TODO: Draw frequency bars
+            spectrumCtx.fillStyle = '#000';
+            spectrumCtx.fillRect(0, 0, spectrumCanvas.width, spectrumCanvas.height);
+            
+            const barWidth = spectrumCanvas.width / dataArray.length;
+            let x = 0;
+            
+            for (let i = 0; i < dataArray.length; i++) {
+                const barHeight = (dataArray[i] / 255) * spectrumCanvas.height;
+                
+                // Student code: Create gradient colors based on frequency
+                spectrumCtx.fillStyle = `hsl(${i / dataArray.length * 360}, 100%, 50%)`;
+                spectrumCtx.fillRect(x, spectrumCanvas.height - barHeight, barWidth - 1, barHeight);
+                
+                x += barWidth;
+            }
+            
+            // BONUS: Detect beats based on sudden changes in low frequencies
+            detectBeats(dataArray);
+        }
+        
+        // TASK 5: Create particle system that reacts to audio
+        class AudioParticle {
+            constructor(x, y, frequency) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.size = Math.random() * 3 + 1;
+                this.frequency = frequency;
+                this.life = 1;
+            }
+            
+            update(audioData) {
+                // TODO: Make particle react to audio frequencies
+                const intensity = audioData[Math.floor(this.frequency * audioData.length)] / 255;
+                
+                // Particle behavior based on music
+                this.x += this.vx * (1 + intensity);
+                this.y += this.vy * (1 + intensity);
+                this.life -= 0.01;
+                
+                return this.life > 0;
+            }
+            
+            draw(ctx) {
+                ctx.fillStyle = `hsl(${this.frequency * 360}, 100%, 50%)`;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+            }
+        }
+        
+        let particles = [];
+        
+        function drawParticleSystem() {
+            if (!analyser) return;
+            
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(dataArray);
+            
+            // TODO: Create particles based on audio intensity
+            const avgIntensity = dataArray.reduce((a,b) => a + b, 0) / dataArray.length;
+            
+            // Create new particles on strong beats
+            if (avgIntensity > 150 && Math.random() > 0.7) {
+                for (let i = 0; i < 10; i++) {
+                    particles.push(new AudioParticle(
+                        Math.random() * barsCanvas.width,
+                        Math.random() * barsCanvas.height,
+                        Math.random()
+                    ));
+                }
+            }
+            
+            // Update and draw particles
+            particles = particles.filter(p => p.update(dataArray));
+            
+            barsCtx.fillStyle = '#000';
+            barsCtx.fillRect(0, 0, barsCanvas.width, barsCanvas.height);
+            particles.forEach(p => p.draw(barsCtx));
+        }
+        
+        // TASK 6: Implement audio effects
+        function addEffect(effectType) {
+            if (!audioContext || !source) {
+                alert('Please play audio first!');
+                return;
+            }
+            
+            // TODO: Create different audio effects
+            switch(effectType) {
+                case 'reverb':
+                    // Create convolution reverb
+                    break;
+                case 'distortion':
+                    // Add wave shaper distortion
+                    break;
+                case 'delay':
+                    // Create delay effect
+                    break;
+                case 'filter':
+                    // Create biquad filter
+                    const filter = audioContext.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 1000;
+                    // Connect filter
+                    break;
+            }
+        }
+        
+        // TASK 7: Beat detection algorithm
+        let lastBeat = 0;
+        let beatThreshold = 1.2;
+        
+        function detectBeats(frequencyData) {
+            // Calculate average energy in low frequencies (bass)
+            let lowFreqSum = 0;
+            for (let i = 0; i < 20; i++) {
+                lowFreqSum += frequencyData[i];
+            }
+            const avgLowFreq = lowFreqSum / 20;
+            
+            // TODO: Implement beat detection algorithm
+            // Compare current average with previous average
+            // If spike detected, trigger beat visual
+            
+            const beatBar = document.getElementById('beatBar');
+            if (avgLowFreq > beatThreshold * lastBeat) {
+                // Beat detected!
+                beatBar.style.width = '100%';
+                setTimeout(() => {
+                    beatBar.style.width = '0%';
+                }, 100);
+            }
+            
+            lastBeat = avgLowFreq;
+        }
+        
+        // Visualization loop
+        function startVisualization() {
+            if (animationId) cancelAnimationFrame(animationId);
+            
+            function visualize() {
+                switch(currentVisualization) {
+                    case 'waveform':
+                        drawWaveform();
+                        break;
+                    case 'spectrum':
+                        drawSpectrum();
+                        break;
+                    case 'bars':
+                        drawSpectrum(); // Reuse spectrum for bars
+                        break;
+                    case 'circular':
+                        // TODO: Implement circular visualization
+                        break;
+                    case 'particle':
+                        drawParticleSystem();
+                        break;
+                }
+                animationId = requestAnimationFrame(visualize);
+            }
+            
+            visualize();
+        }
+        
+        function setVisualization(mode) {
+            currentVisualization = mode;
+            // Show/hide appropriate canvases
+            waveformCanvas.style.display = mode === 'waveform' ? 'block' : 'none';
+            spectrumCanvas.style.display = mode === 'spectrum' ? 'block' : 'none';
+            barsCanvas.style.display = mode === 'bars' ? 'block' : 'none';
+            circularCanvas.style.display = mode === 'circular' ? 'block' : 'none';
+        }
+        
+        function stopAudio() {
+            if (source) {
+                source.stop();
+                source.disconnect();
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+        }
+        
+        function loadSampleTrack() {
+            // TODO: Load and play an audio file
+            const audio = new Audio();
+            audio.src = 'https://example.com/sample.mp3'; // Sample URL
+            // Student code: Connect to analyser
+        }
+        
+        function recordVisualization() {
+            // TODO: Record canvas animation as video
+            alert('Recording feature - implement canvas capture API');
+        }
+        
+        function shareVisualization() {
+            // TODO: Share visualization as image/video
+            alert('Share feature - implement Web Share API');
+        }
+        
+        let currentMission = 0;
+        const missions = [
+            "Create a waveform visualizer",
+            "Build frequency spectrum analyzer",
+            "Implement beat detection",
+            "Create particle system reacting to music",
+            "Add audio effects (reverb, delay)",
+            "Create circular visualization"
+        ];
+        
+        function nextMission() {
+            currentMission = (currentMission + 1) % missions.length;
+            document.getElementById('challenge').innerHTML = 
+                `🎯 MISSION: ${missions[currentMission]}<br><small>Complete this mission to earn the badge!</small>`;
+        }
+        
+        // Make functions global
+        window.playTestTone = playTestTone;
+        window.requestMicrophone = requestMicrophone;
+        window.loadSampleTrack = loadSampleTrack;
+        window.stopAudio = stopAudio;
+        window.setVisualization = setVisualization;
+        window.addEffect = addEffect;
+        window.nextMission = nextMission;
+        window.recordVisualization = recordVisualization;
+        window.shareVisualization = shareVisualization;
+        
+        // Initialize
+        initAudio();
+        
+        console.log(`
+        💡 AUDIO API CHALLENGES:
+        1. Create 3D visualizations using WebGL
+        2. Implement real-time pitch detection
+        3. Build a music visualizer game
+        4. Create audio-reactive shaders
+        5. Implement voice-controlled effects
+        `);
+    </script>
+</body>
+</html>

@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoLocation Treasure Hunt - Find Hidden Treasures!</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        #map {
+            height: 500px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 3px solid #e94560;
+        }
+        
+        .treasure-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .radar {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,255,0,0.2) 0%, rgba(0,0,0,0.8) 100%);
+            position: relative;
+            margin: 20px auto;
+            animation: radarSpin 4s linear infinite;
+        }
+        
+        @keyframes radarSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .radar-sweep {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 50%;
+            height: 2px;
+            background: #0f0;
+            transform-origin: 0% 50%;
+            animation: sweep 2s linear infinite;
+        }
+        
+        @keyframes sweep {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .compass {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: #2c3e50;
+            position: relative;
+            margin: 20px auto;
+            transition: transform 0.3s;
+        }
+        
+        .compass-needle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 70px;
+            background: #e94560;
+            transform-origin: 50% 0%;
+            transform: translateX(-50%) rotate(0deg);
+        }
+        
+        .challenge-box {
+            background: #ff0066;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            animation: pulse 1s infinite;
+            cursor: pointer;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .treasure-clue {
+            background: #f39c12;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        
+        button {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+            background: #ff6b6b;
+        }
+        
+        .achievement {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: gold;
+            color: black;
+            padding: 10px;
+            border-radius: 10px;
+            animation: slideIn 0.5s;
+            z-index: 1000;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .location-log {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        input {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+    <div class="game-container">
+        <h1 style="color:#e94560; text-align:center;">🗺️ GEOLOCATION TREASURE HUNT 🏴‍☠️</h1>
+        <p style="text-align:center;">Find hidden treasures using real GPS coordinates!</p>
+        
+        <div class="treasure-stats">
+            <div class="stat-card">
+                <h3>💰 Treasures Found</h3>
+                <div id="treasureCount" style="font-size: 36px;">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>📏 Distance to Nearest</h3>
+                <div id="distanceDisplay" style="font-size: 24px;">-- m</div>
+            </div>
+            <div class="stat-card">
+                <h3>🧭 Direction</h3>
+                <div id="directionDisplay" style="font-size: 24px;">--°</div>
+            </div>
+            <div class="stat-card">
+                <h3>⭐ Score</h3>
+                <div id="scoreDisplay" style="font-size: 36px;">0</div>
+            </div>
+        </div>
+        
+        <div id="map"></div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <div class="compass" id="compass">
+                    <div class="compass-needle" id="compassNeedle"></div>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">N</div>
+                    <div style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);">S</div>
+                    <div style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%);">W</div>
+                    <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%);">E</div>
+                </div>
+                <div class="radar">
+                    <div class="radar-sweep"></div>
+                    <div id="radarDots" style="position: relative; width: 100%; height: 100%;"></div>
+                </div>
+            </div>
+            
+            <div>
+                <div class="challenge-box" id="challengeBox" onclick="checkCurrentChallenge()">
+                    🎯 CURRENT MISSION: Find the hidden treasure!
+                    <br><small>Click to check progress</small>
+                </div>
+                
+                <div id="treasureClues" class="treasure-clue">
+                    📜 CLUES WILL APPEAR HERE
+                </div>
+                
+                <button onclick="generateNewTreasure()">🎁 Generate New Treasure</button>
+                <button onclick="centerOnUser()">📍 Center on Me</button>
+                <button onclick="startTracking()">🔄 Start Real-time Tracking</button>
+                <button onclick="stopTracking()">⏹️ Stop Tracking</button>
+                <button onclick="shareLocation()">📤 Share Location</button>
+                <button onclick="saveGame()">💾 Save Game</button>
+                <button onclick="loadGame()">📂 Load Game</button>
+                
+                <div class="location-log" id="locationLog">
+                    <strong>📍 LOCATION HISTORY:</strong><br>
+                    Waiting for GPS...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ GAME STATE ============
+        let map;
+        let userMarker;
+        let treasures = [];
+        let watchId = null;
+        let currentPosition = null;
+        let score = 0;
+        let treasuresFound = 0;
+        let locationHistory = [];
+        
+        // Sample treasure locations (student will create dynamic ones)
+        const treasureTemplates = [
+            { name: "Golden Idol", value: 100, clue: "Where ancient spirits guard the golden treasure" },
+            { name: "Emerald Crown", value: 150, clue: "Green gem lies beneath the eastern winds" },
+            { name: "Dragon's Hoard", value: 500, clue: "Where fire meets earth, treasure awaits" },
+            { name: "Pirate's Chest", value: 250, clue: "X marks the spot near the crossroads" },
+            { name: "Crystal Skull", value: 300, clue: "Mystical artifact in the heart of the city" }
+        ];
+        
+        // Initialize map
+        function initMap(lat, lng) {
+            map = L.map('map').setView([lat, lng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            userMarker = L.marker([lat, lng]).addTo(map);
+            userMarker.bindPopup('You are here!').openPopup();
+        }
+        
+        // ============ STUDENT TASKS ============
+        
+        // TASK 1: Get user's current location
+        function getCurrentLocation() {
+            // TODO: Use navigator.geolocation to get current position
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        // Student code: Handle successful location
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        currentPosition = { lat, lng };
+                        
+                        if (!map) {
+                            initMap(lat, lng);
+                        } else {
+                            userMarker.setLatLng([lat, lng]);
+                            map.setView([lat, lng]);
+                        }
+                        
+                        addToLog(`📍 Location updated: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+                        updateCompass();
+                        checkNearbyTreasures();
+                    },
+                    (error) => {
+                        // Student code: Handle errors
+                        let errorMessage = "";
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage = "Permission denied!";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = "Position unavailable!";
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage = "Request timed out!";
+                                break;
+                        }
+                        addToLog(`❌ Location error: ${errorMessage}`, true);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                addToLog("❌ Geolocation not supported by this browser!", true);
+            }
+        }
+        
+        // TASK 2: Calculate distance between two points (Haversine formula)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            // TODO: Implement Haversine formula for accurate distance
+            const R = 6371e3; // Earth's radius in meters
+            
+            // Student code: Calculate distance between coordinates
+            // φ = latitude, λ = longitude
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lon2-lon1) * Math.PI/180;
+            
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            
+            return R * c; // Distance in meters
+        }
+        
+        // TASK 3: Calculate bearing/direction to treasure
+        function calculateBearing(lat1, lon1, lat2, lon2) {
+            // TODO: Calculate bearing from user to treasure
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const λ1 = lon1 * Math.PI/180;
+            const λ2 = lon2 * Math.PI/180;
+            
+            const y = Math.sin(λ2-λ1) * Math.cos(φ2);
+            const x = Math.cos(φ1)*Math.sin(φ2) -
+                      Math.sin(φ1)*Math.cos(φ2)*Math.cos(λ2-λ1);
+            const θ = Math.atan2(y, x);
+            const bearing = (θ * 180/Math.PI + 360) % 360;
+            
+            return bearing;
+        }
+        
+        // TASK 4: Generate random treasure within radius
+        function generateRandomTreasure() {
+            if (!currentPosition) {
+                addToLog("⚠️ Get your location first!");
+                return null;
+            }
+            
+            // TODO: Generate random coordinates within 1km radius
+            const radius = 1000; // meters
+            const randomAngle = Math.random() * 2 * Math.PI;
+            const randomDistance = Math.random() * radius;
+            
+            // Convert distance to latitude/longitude offset
+            const latOffset = (randomDistance * Math.cos(randomAngle)) / 111320;
+            const lonOffset = (randomDistance * Math.sin(randomAngle)) / (111320 * Math.cos(currentPosition.lat * Math.PI/180));
+            
+            const treasureLat = currentPosition.lat + latOffset;
+            const treasureLng = currentPosition.lng + lonOffset;
+            
+            const template = treasureTemplates[Math.floor(Math.random() * treasureTemplates.length)];
+            
+            return {
+                id: Date.now() + Math.random(),
+                name: template.name,
+                value: template.value,
+                clue: template.clue,
+                lat: treasureLat,
+                lng: treasureLng,
+                found: false
+            };
+        }
+        
+        // TASK 5: Check if user found any treasure
+        function checkNearbyTreasures() {
+            if (!currentPosition) return;
+            
+            let nearestDistance = Infinity;
+            let nearestTreasure = null;
+            
+            treasures.forEach(treasure => {
+                if (!treasure.found) {
+                    const distance = calculateDistance(
+                        currentPosition.lat, currentPosition.lng,
+                        treasure.lat, treasure.lng
+                    );
+                    
+                    // TODO: Check if treasure is found (within 10 meters)
+                    if (distance < 10) {
+                        // Found treasure!
+                        treasure.found = true;
+                        treasuresFound++;
+                        score += treasure.value;
+                        
+                        updateStats();
+                        addToLog(`🎉 TREASURE FOUND! ${treasure.name} (+${treasure.value} points)!`);
+                        showAchievement(`Found ${treasure.name}! +${treasure.value} points`);
+                        
+                        // Add treasure marker on map
+                        L.marker([treasure.lat, treasure.lng])
+                            .addTo(map)
+                            .bindPopup(`💰 ${treasure.name}<br>Value: ${treasure.value}`)
+                            .openPopup();
+                        
+                        // Generate new treasure
+                        const newTreasure = generateRandomTreasure();
+                        if (newTreasure) treasures.push(newTreasure);
+                    }
+                    
+                    if (distance < nearestDistance) {
+                        nearestDistance = distance;
+                        nearestTreasure = treasure;
+                    }
+                }
+            });
+            
+            // Update UI with nearest treasure info
+            if (nearestTreasure) {
+                document.getElementById('distanceDisplay').innerHTML = `${Math.round(nearestDistance)} m`;
+                const bearing = calculateBearing(
+                    currentPosition.lat, currentPosition.lng,
+                    nearestTreasure.lat, nearestTreasure.lng
+                );
+                document.getElementById('directionDisplay').innerHTML = `${Math.round(bearing)}°`;
+                document.getElementById('treasureClues').innerHTML = `
+                    📜 CLUE: ${nearestTreasure.clue}<br>
+                    📍 Distance: ${Math.round(nearestDistance)} meters<br>
+                    🧭 Direction: ${getCardinalDirection(bearing)}
+                `;
+                
+                // Update compass needle
+                updateCompassNeedle(bearing);
+                
+                // Update radar
+                updateRadar(nearestDistance, bearing);
+            }
+        }
+        
+        function getCardinalDirection(bearing) {
+            const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+            const index = Math.round(bearing / 45) % 8;
+            return directions[index];
+        }
+        
+        // TASK 6: Implement real-time tracking
+        function startTracking() {
+            if (watchId !== null) {
+                stopTracking();
+            }
+            
+            // TODO: Use watchPosition for continuous updates
+            if ("geolocation" in navigator) {
+                watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        // Student code: Handle position updates
+                        currentPosition = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        
+                        userMarker.setLatLng([currentPosition.lat, currentPosition.lng]);
+                        map.setView([currentPosition.lat, currentPosition.lng]);
+                        
+                        checkNearbyTreasures();
+                        addToLocationHistory(currentPosition);
+                        updateRadarDisplay();
+                    },
+                    (error) => {
+                        addToLog(`❌ Tracking error: ${error.message}`, true);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+                addToLog("🔄 Real-time tracking started!");
+            }
+        }
+        
+        function stopTracking() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                addToLog("⏹️ Tracking stopped");
+            }
+        }
+        
+        // TASK 7: Implement Web Storage (save/load game)
+        function saveGame() {
+            // TODO: Save game state to localStorage
+            const gameState = {
+                treasuresFound,
+                score,
+                treasures: treasures.filter(t => !t.found),
+                date: new Date().toISOString()
+            };
+            
+            localStorage.setItem('treasureGame', JSON.stringify(gameState));
+            addToLog("💾 Game saved!");
+            showAchievement("Game Saved!");
+        }
+        
+        function loadGame() {
+            // TODO: Load game state from localStorage
+            const savedGame = localStorage.getItem('treasureGame');
+            if (savedGame) {
+                const gameState = JSON.parse(savedGame);
+                treasuresFound = gameState.treasuresFound;
+                score = gameState.score;
+                treasures = gameState.treasures;
+                
+                updateStats();
+                addToLog("📂 Game loaded!");
+                showAchievement("Game Loaded!");
+                
+                // Redraw treasures on map
+                treasures.forEach(treasure => {
+                    if (!treasure.found) {
+                        L.marker([treasure.lat, treasure.lng])
+                            .addTo(map)
+                            .bindPopup(`💎 ${treasure.name}<br>Distance: ?`);
+                    }
+                });
+            }
+        }
+        
+        // TASK 8: Implement Web Share API
+        function shareLocation() {
+            if (navigator.share && currentPosition) {
+                // TODO: Use Web Share API to share location
+                navigator.share({
+                    title: 'My Treasure Hunt Location',
+                    text: `I'm at ${currentPosition.lat.toFixed(6)}, ${currentPosition.lng.toFixed(6)}! Join the hunt!`,
+                    url: `https://www.openstreetmap.org/?mlat=${currentPosition.lat}&mlon=${currentPosition.lng}#map=15/${currentPosition.lat}/${currentPosition.lng}`
+                }).catch(error => {
+                    addToLog(`Share failed: ${error.message}`, true);
+                });
+            } else {
+                // Fallback: copy to clipboard
+                const locationText = `${currentPosition.lat}, ${currentPosition.lng}`;
+                navigator.clipboard.writeText(locationText);
+                addToLog("📍 Location copied to clipboard!");
+            }
+        }
+        
+        // ============ HELPER FUNCTIONS ============
+        
+        function updateStats() {
+            document.getElementById('treasureCount').innerHTML = treasuresFound;
+            document.getElementById('scoreDisplay').innerHTML = score;
+        }
+        
+        function addToLog(message, isError = false) {
+            const logDiv = document.getElementById('locationLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div style="color: ${isError ? '#e74c3c' : '#2ecc71'}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function addToLocationHistory(position) {
+            locationHistory.unshift({
+                lat: position.lat,
+                lng: position.lng,
+                time: new Date().toISOString()
+            });
+            
+            // Keep last 10 locations
+            if (locationHistory.length > 10) locationHistory.pop();
+            
+            // Draw path on map
+            if (locationHistory.length > 1) {
+                const points = locationHistory.map(p => [p.lat, p.lng]);
+                L.polyline(points, { color: 'red' }).addTo(map);
+            }
+        }
+        
+        function updateCompassNeedle(bearing) {
+            const needle = document.getElementById('compassNeedle');
+            needle.style.transform = `translateX(-50%) rotate(${bearing}deg)`;
+        }
+        
+        function updateRadar(distance, bearing) {
+            const radarDots = document.getElementById('radarDots');
+            radarDots.innerHTML = '';
+            
+            // Calculate relative position on radar
+            const maxDistance = 500; // meters
+            const radius = 100; // pixels
+            const relativeDistance = Math.min(distance / maxDistance, 1);
+            const x = Math.sin(bearing * Math.PI/180) * relativeDistance * radius;
+            const y = -Math.cos(bearing * Math.PI/180) * relativeDistance * radius;
+            
+            const dot = document.createElement('div');
+            dot.style.position = 'absolute';
+            dot.style.left = `calc(50% + ${x}px)`;
+            dot.style.top = `calc(50% + ${y}px)`;
+            dot.style.width = '8px';
+            dot.style.height = '8px';
+            dot.style.background = '#0f0';
+            dot.style.borderRadius = '50%';
+            dot.style.boxShadow = '0 0 5px #0f0';
+            radarDots.appendChild(dot);
+        }
+        
+        function updateRadarDisplay() {
+            // Update radar with nearest treasure
+            if (treasures.length > 0 && currentPosition) {
+                let nearest = null;
+                let nearestDist = Infinity;
+                
+                treasures.forEach(treasure => {
+                    if (!treasure.found) {
+                        const dist = calculateDistance(
+                            currentPosition.lat, currentPosition.lng,
+                            treasure.lat, treasure.lng
+                        );
+                        if (dist < nearestDist) {
+                            nearestDist = dist;
+                            nearest = treasure;
+                        }
+                    }
+                });
+                
+                if (nearest) {
+                    const bearing = calculateBearing(
+                        currentPosition.lat, currentPosition.lng,
+                        nearest.lat, nearest.lng
+                    );
+                    updateRadar(nearestDist, bearing);
+                }
+            }
+        }
+        
+        function updateCompass() {
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', (event) => {
+                    const alpha = event.alpha; // Compass direction
+                    if (alpha !== null) {
+                        document.getElementById('compass').style.transform = `rotate(${360 - alpha}deg)`;
+                    }
+                });
+            }
+        }
+        
+        function showAchievement(message) {
+            const achievement = document.createElement('div');
+            achievement.className = 'achievement';
+            achievement.innerHTML = `🏆 ${message}`;
+            document.body.appendChild(achievement);
+            setTimeout(() => {
+                achievement.remove();
+            }, 3000);
+        }
+        
+        function generateNewTreasure() {
+            const newTreasure = generateRandomTreasure();
+            if (newTreasure) {
+                treasures.push(newTreasure);
+                addToLog(`✨ New treasure generated: ${newTreasure.name}`);
+                showAchievement(`New Treasure: ${newTreasure.name}`);
+            }
+        }
+        
+        function centerOnUser() {
+            if (currentPosition) {
+                map.setView([currentPosition.lat, currentPosition.lng], 15);
+                addToLog("📍 Centered on your location");
+            } else {
+                getCurrentLocation();
+            }
+        }
+        
+        function checkCurrentChallenge() {
+            if (treasures.length > 0 && currentPosition) {
+                const nearestTreasure = treasures.find(t => !t.found);
+                if (nearestTreasure) {
+                    const distance = calculateDistance(
+                        currentPosition.lat, currentPosition.lng,
+                        nearestTreasure.lat, nearestTreasure.lng
+                    );
+                    addToLog(`🎯 Distance to nearest treasure: ${Math.round(distance)} meters`);
+                    
+                    if (distance < 50) {
+                        addToLog("🔥 You're very close! Keep going!");
+                    } else if (distance < 100) {
+                        addToLog("🌟 Getting warmer!");
+                    } else {
+                        addToLog("💪 Keep hunting!");
+                    }
+                }
+            }
+        }
+        
+        // Initialize game
+        function init() {
+            getCurrentLocation();
+            
+            // Generate initial treasures
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    generateNewTreasure();
+                }, i * 500);
+            }
+            
+            addToLog("🎮 Treasure Hunt started! Find treasures using GPS!");
+            addToLog("💡 Tip: Move around to find hidden treasures!");
+        }
+        
+        // Make functions global
+        window.getCurrentLocation = getCurrentLocation;
+        window.generateNewTreasure = generateNewTreasure;
+        window.centerOnUser = centerOnUser;
+        window.startTracking = startTracking;
+        window.stopTracking = stopTracking;
+        window.shareLocation = shareLocation;
+        window.saveGame = saveGame;
+        window.loadGame = loadGame;
+        window.checkCurrentChallenge = checkCurrentChallenge;
+        
+        init();
+        
+        console.log(`
+        💡 GEOLOCATION CHALLENGES:
+        1. Implement geofencing alerts
+        2. Create location-based achievements
+        3. Add augmented reality view
+        4. Implement multiplayer treasure hunting
+        5. Create custom map overlays
+        `);
+    </script>
+</body>
+</html>

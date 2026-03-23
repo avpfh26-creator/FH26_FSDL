@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Chaos - Drawing Battle Arena</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Press Start 2P', 'Courier New', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .game-container {
+            background: #1a1a2e;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border: 2px solid #00ff00;
+        }
+        
+        canvas {
+            border: 3px solid #00ff00;
+            background: #000;
+            cursor: crosshair;
+            box-shadow: 0 0 20px rgba(0,255,0,0.3);
+        }
+        
+        .controls {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        
+        .tool {
+            background: #16213e;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: monospace;
+            font-weight: bold;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0,255,0,0.5);
+        }
+        
+        .score-board {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .challenge {
+            background: #ff0066;
+            color: white;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        input {
+            background: #000;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 5px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1 style="color:#0f0; text-align:center;">🎨 CANVAS CHAOS 🎮</h1>
+        <p style="color:#fff; text-align:center; margin-bottom:10px;">Draw, Animate, Destroy!</p>
+        
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+        
+        <div class="controls">
+            <div class="tool">
+                <h3 style="color:#0f0;">🎨 DRAWING TOOLS</h3>
+                <button onclick="setTool('brush')">🖌️ Brush</button>
+                <button onclick="setTool('eraser')">🧽 Eraser</button>
+                <button onclick="setTool('fill')">🎨 Fill</button>
+                <input type="color" id="colorPicker" value="#00ff00">
+                <input type="range" id="brushSize" min="1" max="50" value="5">
+            </div>
+            
+            <div class="tool">
+                <h3 style="color:#0f0;">🎯 SHAPES</h3>
+                <button onclick="drawShape('circle')">⚪ Circle</button>
+                <button onclick="drawShape('square')">⬛ Square</button>
+                <button onclick="drawShape('triangle')">🔺 Triangle</button>
+                <button onclick="drawShape('star')">⭐ Star</button>
+            </div>
+            
+            <div class="tool">
+                <h3 style="color:#0f0;">✨ ANIMATIONS</h3>
+                <button onclick="startAnimation()">🔄 Start Particles</button>
+                <button onclick="stopAnimation()">⏹️ Stop</button>
+                <button onclick="clearCanvas()">🗑️ Clear</button>
+                <button onclick="saveArt()">💾 Save Art</button>
+            </div>
+        </div>
+        
+        <div class="score-board" id="scoreBoard">
+            🎯 SCORE: <span id="score">0</span> | 
+            🖌️ TOOL: <span id="currentTool">brush</span> | 
+            🎨 COLOR: <span id="currentColor">#00ff00</span>
+        </div>
+        
+        <div class="challenge" id="challenge">
+            🏆 CHALLENGE: Draw a perfect circle using the arc method!
+        </div>
+        
+        <div style="text-align: center; margin-top: 10px;">
+            <button onclick="nextChallenge()">🎯 Next Challenge</button>
+            <button onclick="checkAchievement()">🏅 Check Achievement</button>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+        let currentTool = 'brush';
+        let particles = [];
+        let animationId = null;
+        let score = 0;
+        
+        // Challenge system
+        const challenges = [
+            { name: "Perfect Circle", task: "Draw a perfect circle", check: () => checkPerfectCircle() },
+            { name: "Gradient Master", task: "Create a radial gradient", check: () => checkGradient() },
+            { name: "Animation Expert", task: "Create moving particles", check: () => checkParticles() },
+            { name: "Pixel Artist", task: "Draw a pixel art character", check: () => checkPixelArt() },
+            { name: "Transform Wizard", task: "Use rotate and translate", check: () => checkTransform() }
+        ];
+        let currentChallenge = 0;
+        
+        // Initialize canvas
+        function init() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            setupEventListeners();
+            updateUI();
+        }
+        
+        // ============ STUDENT TASKS SECTION ============
+        
+        // TASK 1: Implement drawing with different brush effects
+        function draw(e) {
+            if (!drawing) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const size = document.getElementById('brushSize').value;
+            const color = document.getElementById('colorPicker').value;
+            
+            // TODO: Implement different brush effects based on currentTool
+            // - Brush: Normal circle drawing
+            // - Eraser: Draw black circles
+            // - Fill: Flood fill algorithm (bonus challenge)
+            
+            if (currentTool === 'brush') {
+                // Student code here
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, size/2, 0, Math.PI * 2);
+                ctx.fill();
+                addScore(1);
+            } else if (currentTool === 'eraser') {
+                // TODO: Implement eraser (draw black)
+            }
+        }
+        
+        // TASK 2: Implement shape drawing with transformations
+        function drawShape(shape) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const size = 50;
+            const color = document.getElementById('colorPicker').value;
+            
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            
+            // TODO: Implement each shape using canvas paths
+            switch(shape) {
+                case 'circle':
+                    // Student code: draw circle
+                    break;
+                case 'square':
+                    // Student code: draw square
+                    break;
+                case 'triangle':
+                    // Student code: draw triangle
+                    break;
+                case 'star':
+                    // BONUS: Draw a star using multiple points
+                    break;
+            }
+            ctx.fill();
+            addScore(10);
+        }
+        
+        // TASK 3: Create particle system with requestAnimationFrame
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8;
+                this.life = 1;
+                this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                this.size = Math.random() * 5 + 2;
+            }
+            
+            update() {
+                // TODO: Update particle position with gravity and friction
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= 0.02;
+                return this.life > 0;
+            }
+            
+            draw() {
+                // TODO: Draw particle with fading effect
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        function startAnimation() {
+            if (animationId) cancelAnimationFrame(animationId);
+            
+            // Create particles at random positions
+            for (let i = 0; i < 50; i++) {
+                particles.push(new Particle(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height
+                ));
+            }
+            
+            function animate() {
+                // TODO: Clear canvas with trail effect
+                // Hint: Use fillRect with low alpha for trail
+                
+                // Update and draw particles
+                particles = particles.filter(p => p.update());
+                particles.forEach(p => p.draw());
+                
+                animationId = requestAnimationFrame(animate);
+            }
+            
+            animate();
+            addScore(20);
+        }
+        
+        // TASK 4: Implement flood fill algorithm
+        function floodFill(x, y, fillColor) {
+            // TODO: Implement recursive or stack-based flood fill
+            // This is a challenging algorithm that tests recursion understanding
+            const targetColor = ctx.getImageData(x, y, 1, 1).data;
+            
+            // Student code here
+            addScore(50);
+        }
+        
+        // TASK 5: Create image manipulation filters
+        function applyFilter(filter) {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            // TODO: Implement different image filters
+            switch(filter) {
+                case 'grayscale':
+                    // Convert to grayscale
+                    for (let i = 0; i < data.length; i += 4) {
+                        const gray = (data[i] + data[i+1] + data[i+2]) / 3;
+                        data[i] = gray;
+                        data[i+1] = gray;
+                        data[i+2] = gray;
+                    }
+                    break;
+                case 'invert':
+                    // Invert colors
+                    break;
+                case 'sepia':
+                    // Apply sepia tone
+                    break;
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            addScore(30);
+        }
+        
+        // ============ HELPER FUNCTIONS ============
+        
+        function setTool(tool) {
+            currentTool = tool;
+            document.getElementById('currentTool').innerText = tool;
+            
+            if (tool === 'fill') {
+                const color = document.getElementById('colorPicker').value;
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                floodFill(centerX, centerY, color);
+            }
+        }
+        
+        function addScore(points) {
+            score += points;
+            document.getElementById('score').innerText = score;
+            
+            // Visual feedback
+            const scoreBoard = document.getElementById('scoreBoard');
+            scoreBoard.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+                scoreBoard.style.transform = 'scale(1)';
+            }, 200);
+        }
+        
+        function clearCanvas() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            addScore(-5);
+        }
+        
+        function saveArt() {
+            const link = document.createElement('a');
+            link.download = 'my-canvas-art.png';
+            link.href = canvas.toDataURL();
+            link.click();
+            addScore(10);
+        }
+        
+        function stopAnimation() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+                particles = [];
+            }
+        }
+        
+        function setupEventListeners() {
+            canvas.addEventListener('mousedown', () => drawing = true);
+            canvas.addEventListener('mouseup', () => drawing = false);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseleave', () => drawing = false);
+        }
+        
+        function updateUI() {
+            const colorPicker = document.getElementById('colorPicker');
+            colorPicker.addEventListener('input', (e) => {
+                document.getElementById('currentColor').innerText = e.target.value;
+            });
+        }
+        
+        // Challenge checking functions
+        function checkPerfectCircle() {
+            // TODO: Analyze canvas to check if there's a perfect circle
+            return false;
+        }
+        
+        function checkGradient() {
+            // TODO: Check for gradient usage
+            return false;
+        }
+        
+        function checkParticles() {
+            return particles.length > 0;
+        }
+        
+        function checkPixelArt() {
+            // TODO: Check for pixelated pattern
+            return false;
+        }
+        
+        function checkTransform() {
+            // TODO: Check if transformations were used
+            return false;
+        }
+        
+        function nextChallenge() {
+            currentChallenge = (currentChallenge + 1) % challenges.length;
+            const challenge = challenges[currentChallenge];
+            document.getElementById('challenge').innerHTML = 
+                `🏆 CHALLENGE: ${challenge.task}!<br>🎁 Reward: 100 points!`;
+        }
+        
+        function checkAchievement() {
+            const challenge = challenges[currentChallenge];
+            if (challenge.check()) {
+                addScore(100);
+                alert(`🎉 Achievement unlocked: ${challenge.name}! +100 points!`);
+                nextChallenge();
+            } else {
+                alert(`❌ Not yet! Try: ${challenge.task}`);
+            }
+        }
+        
+        // Make functions globally available
+        window.setTool = setTool;
+        window.drawShape = drawShape;
+        window.startAnimation = startAnimation;
+        window.stopAnimation = stopAnimation;
+        window.clearCanvas = clearCanvas;
+        window.saveArt = saveArt;
+        window.nextChallenge = nextChallenge;
+        window.checkAchievement = checkAchievement;
+        
+        // Start the game
+        init();
+        
+        console.log(`
+        💡 CANVAS CHALLENGES:
+        1. Implement different brush styles (rainbow, spray, pattern)
+        2. Create undo/redo functionality
+        3. Add layer system
+        4. Implement shape transformations (rotate, scale)
+        5. Create screenshot and share feature
+        `);
+    </script>
+</body>
+</html>

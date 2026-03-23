@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag & Drop Dungeon - Inventory Management RPG</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #2c3e50;
+            margin: 0;
+            padding: 20px;
+            user-select: none;
+        }
+        
+        .dungeon {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+            background: #16213e;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        
+        .slot {
+            aspect-ratio: 1;
+            background: #0f3460;
+            border: 2px solid #e94560;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .slot.drag-over {
+            background: #e94560;
+            transform: scale(1.05);
+        }
+        
+        .item {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            text-align: center;
+            cursor: grab;
+            transition: all 0.3s;
+        }
+        
+        .item:active {
+            cursor: grabbing;
+        }
+        
+        .item[data-rarity="common"] { background: #95a5a6; color: white; }
+        .item[data-rarity="rare"] { background: #3498db; color: white; }
+        .item[data-rarity="epic"] { background: #9b59b6; color: white; }
+        .item[data-rarity="legendary"] { background: #f39c12; color: white; animation: pulse 1s infinite; }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 5px #f39c12; }
+            50% { box-shadow: 0 0 20px #f39c12; }
+        }
+        
+        .equipment-slot {
+            background: #0f3460;
+            border: 2px solid #e94560;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px;
+            text-align: center;
+            min-height: 150px;
+        }
+        
+        .character-stats {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px;
+        }
+        
+        .spell-book {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .spell {
+            background: #e94560;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .spell:hover {
+            transform: scale(1.05);
+        }
+        
+        .drop-zone {
+            border: 2px dashed #e94560;
+            background: rgba(233,69,96,0.1);
+            text-align: center;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 10px;
+        }
+        
+        button {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+            background: #ff6b6b;
+        }
+        
+        .quest-log {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .drag-preview {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0.8;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="dungeon">
+        <h1 style="color:#e94560; text-align:center;">🗡️ DRAG & DROP DUNGEON 🛡️</h1>
+        <p style="color:#fff; text-align:center;">Drag items, equip gear, and craft legendary weapons!</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 2fr;">
+            <div>
+                <div class="character-stats">
+                    <h3 style="color:#e94560;">👤 CHARACTER</h3>
+                    <div>❤️ HP: <span id="hp">100</span>/100</div>
+                    <div>⚔️ Attack: <span id="attack">10</span></div>
+                    <div>🛡️ Defense: <span id="defense">5</span></div>
+                    <div>✨ Magic: <span id="magic">0</span></div>
+                    <div>⭐ Level: <span id="level">1</span></div>
+                </div>
+                
+                <div class="equipment-slot">
+                    <h3 style="color:#e94560;">⚔️ WEAPON SLOT</h3>
+                    <div id="weaponSlot" class="slot" style="width: 100px; height: 100px; margin: 0 auto;"></div>
+                </div>
+                
+                <div class="equipment-slot">
+                    <h3 style="color:#e94560;">🛡️ ARMOR SLOT</h3>
+                    <div id="armorSlot" class="slot" style="width: 100px; height: 100px; margin: 0 auto;"></div>
+                </div>
+            </div>
+            
+            <div>
+                <div class="inventory-grid" id="inventory"></div>
+                
+                <div class="drop-zone" id="craftingZone">
+                    🎨 CRAFTING ZONE - Drag items here to combine!
+                </div>
+                
+                <div class="spell-book">
+                    <div class="spell" draggable="true" data-spell="fireball">🔥 Fireball</div>
+                    <div class="spell" draggable="true" data-spell="heal">💚 Heal</div>
+                    <div class="spell" draggable="true" data-spell="lightning">⚡ Lightning</div>
+                    <div class="spell" draggable="true" data-spell="shield">🛡️ Shield</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="quest-log" id="questLog">
+            <strong>📜 QUEST LOG:</strong><br>
+            - Drag items to organize inventory<br>
+            - Equip weapons and armor by dragging to slots<br>
+            - Combine items in crafting zone<br>
+            - Use spells by dragging to enemies (coming soon!)
+        </div>
+        
+        <div style="text-align: center; margin-top: 10px;">
+            <button onclick="generateRandomItem()">🎁 Generate Random Item</button>
+            <button onclick="clearInventory()">🗑️ Clear Inventory</button>
+            <button onclick="sortInventory()">🔄 Sort Inventory</button>
+            <button onclick="exportInventory()">💾 Export Build</button>
+            <button onclick="loadBuild()">📂 Load Build</button>
+        </div>
+    </div>
+
+    <script>
+        // ============ GAME DATA ============
+        let inventory = [];
+        let equippedWeapon = null;
+        let equippedArmor = null;
+        
+        // Item templates
+        const itemTemplates = {
+            // Weapons
+            woodenSword: { name: "Wooden Sword", type: "weapon", attack: 5, rarity: "common", emoji: "🗡️" },
+            ironSword: { name: "Iron Sword", type: "weapon", attack: 12, rarity: "rare", emoji: "⚔️" },
+            flameBlade: { name: "Flame Blade", type: "weapon", attack: 25, rarity: "epic", emoji: "🔥🗡️" },
+            dragonSlayer: { name: "Dragon Slayer", type: "weapon", attack: 50, rarity: "legendary", emoji: "🐉⚔️" },
+            
+            // Armor
+            leatherArmor: { name: "Leather Armor", type: "armor", defense: 3, rarity: "common", emoji: "🧥" },
+            chainMail: { name: "Chain Mail", type: "armor", defense: 8, rarity: "rare", emoji: "⛓️" },
+            enchantedPlate: { name: "Enchanted Plate", type: "armor", defense: 18, rarity: "epic", emoji: "✨🛡️" },
+            celestialArmor: { name: "Celestial Armor", type: "armor", defense: 35, rarity: "legendary", emoji: "🌟🛡️" },
+            
+            // Consumables
+            healthPotion: { name: "Health Potion", type: "consumable", heal: 30, rarity: "common", emoji: "🧪" },
+            manaPotion: { name: "Mana Potion", type: "consumable", mana: 20, rarity: "common", emoji: "💜🧪" },
+            elixir: { name: "Elixir", type: "consumable", heal: 100, rarity: "legendary", emoji: "✨🧪" },
+            
+            // Crafting materials
+            dragonScale: { name: "Dragon Scale", type: "material", rarity: "epic", emoji: "🐉✨" },
+            phoenixFeather: { name: "Phoenix Feather", type: "material", rarity: "legendary", emoji: "🦅🔥" }
+        };
+        
+        // ============ STUDENT TASKS ============
+        
+        // TASK 1: Implement drag and drop for inventory items
+        function setupDragAndDrop() {
+            const items = document.querySelectorAll('.item');
+            const slots = document.querySelectorAll('.slot');
+            const craftingZone = document.getElementById('craftingZone');
+            
+            items.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+                item.setAttribute('draggable', 'true');
+            });
+            
+            slots.forEach(slot => {
+                slot.addEventListener('dragover', handleDragOver);
+                slot.addEventListener('drop', handleDrop);
+            });
+            
+            // TODO: Implement crafting zone drop
+            craftingZone.addEventListener('dragover', handleDragOver);
+            craftingZone.addEventListener('drop', handleCraftingDrop);
+        }
+        
+        let draggedItem = null;
+        
+        function handleDragStart(e) {
+            // TODO: Store dragged item data
+            draggedItem = this;
+            e.dataTransfer.setData('text/plain', this.id);
+            e.dataTransfer.effectAllowed = 'move';
+            this.style.opacity = '0.5';
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            this.classList.add('drag-over');
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            
+            // TODO: Handle item drop logic
+            // Check if drop target is a valid slot
+            // Move item from source to destination
+            // Update inventory display
+        }
+        
+        function handleDragEnd(e) {
+            this.style.opacity = '1';
+            draggedItem = null;
+            
+            // Remove drag-over class from all slots
+            document.querySelectorAll('.slot').forEach(slot => {
+                slot.classList.remove('drag-over');
+            });
+        }
+        
+        // TASK 2: Implement crafting system (combine items)
+        let craftingQueue = [];
+        
+        function handleCraftingDrop(e) {
+            e.preventDefault();
+            
+            // TODO: Implement item combination logic
+            // Add dropped item to crafting queue
+            // If two items are combined, create new item based on combination rules
+            
+            const droppedItemId = e.dataTransfer.getData('text/plain');
+            const droppedItem = findItemById(droppedItemId);
+            
+            if (droppedItem) {
+                craftingQueue.push(droppedItem);
+                updateCraftingDisplay();
+                
+                // Check if we can craft
+                if (craftingQueue.length >= 2) {
+                    craftItems(craftingQueue[0], craftingQueue[1]);
+                    craftingQueue = [];
+                }
+            }
+        }
+        
+        function craftItems(item1, item2) {
+            // TODO: Create crafting recipes
+            // Example: Dragon Scale + Phoenix Feather = DragonSlayer
+            
+            let craftedItem = null;
+            
+            // Student code: Define crafting recipes
+            if (item1.name === "Dragon Scale" && item2.name === "Phoenix Feather") {
+                craftedItem = { ...itemTemplates.dragonSlayer };
+                addQuestLog("✨ CRAFTED: Dragon Slayer! +50 Attack!");
+            } else if (item1.name === "Health Potion" && item2.name === "Mana Potion") {
+                craftedItem = { ...itemTemplates.elixir };
+                addQuestLog("✨ CRAFTED: Elixir of Life!");
+            }
+            
+            if (craftedItem) {
+                // Remove crafted items from inventory
+                removeItemFromInventory(item1);
+                removeItemFromInventory(item2);
+                addItemToInventory(craftedItem);
+                updateStats();
+            } else {
+                addQuestLog("❌ Failed to craft: Invalid combination!");
+            }
+            
+            updateInventoryDisplay();
+        }
+        
+        // TASK 3: Implement file drag and drop for importing builds
+        function setupFileDrop() {
+            const dropZone = document.getElementById('craftingZone');
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                
+                // TODO: Handle file drop for importing builds
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    const reader = new FileReader();
+                    
+                    reader.onload = (event) => {
+                        // Student code: Parse JSON and load build
+                        try {
+                            const buildData = JSON.parse(event.target.result);
+                            loadBuildData(buildData);
+                            addQuestLog(`📂 Loaded build: ${buildData.name || 'Custom Build'}`);
+                        } catch (error) {
+                            addQuestLog(`❌ Failed to load build: ${error.message}`);
+                        }
+                    };
+                    
+                    reader.readAsText(file);
+                }
+            });
+        }
+        
+        // TASK 4: Implement custom cursor for drag operations
+        function setupCustomCursor() {
+            // TODO: Create custom drag preview using setDragImage
+            // This improves user experience
+        }
+        
+        // TASK 5: Implement spell casting with drag to enemies
+        function setupSpellCasting() {
+            const spells = document.querySelectorAll('.spell');
+            
+            spells.forEach(spell => {
+                spell.addEventListener('dragstart', (e) => {
+                    // TODO: Store spell data for drag
+                    e.dataTransfer.setData('text/plain', spell.getAttribute('data-spell'));
+                    e.dataTransfer.effectAllowed = 'copy';
+                });
+            });
+        }
+        
+        // ============ HELPER FUNCTIONS ============
+        
+        function generateRandomItem() {
+            const itemKeys = Object.keys(itemTemplates);
+            const randomKey = itemKeys[Math.floor(Math.random() * itemKeys.length)];
+            const item = { ...itemTemplates[randomKey], id: Date.now() + Math.random() };
+            addItemToInventory(item);
+            updateInventoryDisplay();
+            addQuestLog(`🎁 Found: ${item.name}!`);
+        }
+        
+        function addItemToInventory(item) {
+            inventory.push(item);
+            updateStats();
+        }
+        
+        function removeItemFromInventory(itemToRemove) {
+            const index = inventory.findIndex(item => item.id === itemToRemove.id);
+            if (index !== -1) {
+                inventory.splice(index, 1);
+                updateStats();
+            }
+        }
+        
+        function findItemById(id) {
+            return inventory.find(item => item.id == id);
+        }
+        
+        function updateInventoryDisplay() {
+            const inventoryGrid = document.getElementById('inventory');
+            inventoryGrid.innerHTML = '';
+            
+            inventory.forEach((item, index) => {
+                const slot = document.createElement('div');
+                slot.className = 'slot';
+                slot.style.position = 'relative';
+                
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'item';
+                itemDiv.setAttribute('data-rarity', item.rarity);
+                itemDiv.setAttribute('draggable', 'true');
+                itemDiv.id = `item-${item.id}`;
+                itemDiv.innerHTML = `
+                    <div style="font-size: 24px;">${item.emoji || '📦'}</div>
+                    <div style="font-size: 10px;">${item.name}</div>
+                    <div style="font-size: 8px;">${item.attack ? '⚔️+' + item.attack : ''}${item.defense ? '🛡️+' + item.defense : ''}</div>
+                `;
+                
+                slot.appendChild(itemDiv);
+                inventoryGrid.appendChild(slot);
+            });
+            
+            // Re-attach drag events
+            setupDragAndDrop();
+            
+            // Update equipment slots
+            const weaponSlot = document.getElementById('weaponSlot');
+            const armorSlot = document.getElementById('armorSlot');
+            
+            weaponSlot.innerHTML = equippedWeapon ? 
+                `<div class="item" data-rarity="${equippedWeapon.rarity}">${equippedWeapon.emoji}<br>${equippedWeapon.name}</div>` : 
+                '<div style="color: #666;">Empty Slot<br>Drag weapon here</div>';
+                
+            armorSlot.innerHTML = equippedArmor ? 
+                `<div class="item" data-rarity="${equippedArmor.rarity}">${equippedArmor.emoji}<br>${equippedArmor.name}</div>` : 
+                '<div style="color: #666;">Empty Slot<br>Drag armor here</div>';
+        }
+        
+        function updateStats() {
+            let totalAttack = 10; // Base attack
+            let totalDefense = 5; // Base defense
+            let totalMagic = 0;
+            
+            if (equippedWeapon) totalAttack += equippedWeapon.attack || 0;
+            if (equippedArmor) totalDefense += equippedArmor.defense || 0;
+            
+            document.getElementById('attack').innerText = totalAttack;
+            document.getElementById('defense').innerText = totalDefense;
+            
+            // Update character level based on total stats
+            const level = Math.floor((totalAttack + totalDefense) / 15);
+            document.getElementById('level').innerText = level;
+        }
+        
+        function clearInventory() {
+            inventory = [];
+            equippedWeapon = null;
+            equippedArmor = null;
+            updateInventoryDisplay();
+            updateStats();
+            addQuestLog("🗑️ Inventory cleared!");
+        }
+        
+        function sortInventory() {
+            // TODO: Implement inventory sorting by rarity and type
+            inventory.sort((a, b) => {
+                const rarityOrder = { legendary: 4, epic: 3, rare: 2, common: 1 };
+                return rarityOrder[b.rarity] - rarityOrder[a.rarity];
+            });
+            updateInventoryDisplay();
+            addQuestLog("🔄 Inventory sorted by rarity!");
+        }
+        
+        function exportInventory() {
+            const buildData = {
+                name: "My Dungeon Build",
+                date: new Date().toISOString(),
+                inventory: inventory.map(item => ({
+                    name: item.name,
+                    type: item.type,
+                    rarity: item.rarity
+                })),
+                equippedWeapon: equippedWeapon?.name,
+                equippedArmor: equippedArmor?.name
+            };
+            
+            const dataStr = JSON.stringify(buildData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dungeon-build.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            addQuestLog("💾 Build exported successfully!");
+        }
+        
+        function loadBuildData(buildData) {
+            // TODO: Load saved build data
+            clearInventory();
+            // Student code: Parse and load items
+        }
+        
+        function loadBuild() {
+            // Create file input for loading
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const buildData = JSON.parse(event.target.result);
+                        loadBuildData(buildData);
+                    } catch (error) {
+                        addQuestLog(`❌ Failed to load build: ${error.message}`);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+        
+        function updateCraftingDisplay() {
+            const craftingZone = document.getElementById('craftingZone');
+            if (craftingQueue.length === 0) {
+                craftingZone.innerHTML = '🎨 CRAFTING ZONE - Drag items here to combine!';
+            } else {
+                craftingZone.innerHTML = `
+                    🎨 CRAFTING QUEUE:<br>
+                    ${craftingQueue.map(item => `${item.emoji} ${item.name}`).join(' + ')}<br>
+                    <small>Drop another item to craft!</small>
+                `;
+            }
+        }
+        
+        function addQuestLog(message) {
+            const log = document.getElementById('questLog');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `<br>[${timestamp}] ${message}`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // Make functions global
+        window.generateRandomItem = generateRandomItem;
+        window.clearInventory = clearInventory;
+        window.sortInventory = sortInventory;
+        window.exportInventory = exportInventory;
+        window.loadBuild = loadBuild;
+        
+        // Initialize game
+        function init() {
+            // Add some starter items
+            addItemToInventory({ ...itemTemplates.woodenSword, id: Date.now() + 1 });
+            addItemToInventory({ ...itemTemplates.leatherArmor, id: Date.now() + 2 });
+            addItemToInventory({ ...itemTemplates.healthPotion, id: Date.now() + 3 });
+            addItemToInventory({ ...itemTemplates.dragonScale, id: Date.now() + 4 });
+            
+            updateInventoryDisplay();
+            setupDragAndDrop();
+            setupFileDrop();
+            setupSpellCasting();
+            
+            addQuestLog("🏰 Welcome to Drag & Drop Dungeon!");
+            addQuestLog("💡 Tip: Try combining Dragon Scale with Phoenix Feather!");
+        }
+        
+        init();
+        
+        console.log(`
+        💡 DRAG & DROP CHALLENGES:
+        1. Implement item stacking with quantity system
+        2. Add tooltips on drag hover
+        3. Create drag animation with custom ghost image
+        4. Implement touch events for mobile
+        5. Add drop zones with different effects
+        `);
+    </script>
+</body>
+</html>

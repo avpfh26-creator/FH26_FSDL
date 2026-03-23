@@ -24,7 +24,7 @@ root.render(
     {/* <App /> */}
     {/* <FunctionalComponent /> */}
     {/* <ClassComponent /> */}
-    {/* <ComponentDemo /> */}
+    <ComponentDemo />
     {/* <PropsBasics /> */}
     {/* <PropsDestructuring /> */}
     {/* <SimpleContactForm /> */}
@@ -35,7 +35,7 @@ root.render(
     {/* <MouseEvents /> */}
     {/* <KeyboardEvents /> */}
     {/* <FormEvents /> */}
-    <ClipboardEvents />
+    {/* <ClipboardEvents /> */}
   </React.StrictMode>
 );
 

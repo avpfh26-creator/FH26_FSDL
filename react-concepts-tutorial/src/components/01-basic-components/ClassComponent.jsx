@@ -30,7 +30,7 @@ class ClassComponent extends Component {
 
   // Custom method to update count
   incrementCount = () => {
-    this.setState({ count: this.state.count + 1 });
+    this.setState({ count: this.state.count + 10 });
   };
 
   // render method - must return JSX
